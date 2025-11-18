@@ -633,6 +633,8 @@
             animation-delay: 0.4s;
         }
     </style>
+
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-dash.css') }}">
 </head>
 
 <body>
