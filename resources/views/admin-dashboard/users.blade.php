@@ -190,19 +190,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination">
-            <a href="#" class="pagination-btn">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            <a href="#" class="pagination-btn active">1</a>
-            <a href="#" class="pagination-btn">2</a>
-            <a href="#" class="pagination-btn">3</a>
-            <a href="#" class="pagination-btn">4</a>
-            <a href="#" class="pagination-btn">5</a>
-            <a href="#" class="pagination-btn">
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        </div>
+        {{ $users->links('vendor.pagination.admin-pagination') }}
     </div>
 </div>
 @endsection

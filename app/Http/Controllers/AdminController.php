@@ -45,7 +45,7 @@ class AdminController extends Controller
             return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
         }
 
-        $users = User::all();
+        $users = User::orderBy('created_at', 'desc')->paginate(10);
         $products = Product::all();
         $orders = UserOrder::all();
         return view('admin-dashboard.users', compact('users', 'products', 'orders'));
@@ -59,7 +59,7 @@ class AdminController extends Controller
         }
 
         $users = User::all();
-        $products = Product::all();
+        $products = Product::orderBy('created_at', 'desc')->paginate(12);
         $orders = UserOrder::all();
         return view('admin-dashboard.products', compact('products', 'users', 'orders'));
     }
@@ -73,7 +73,7 @@ class AdminController extends Controller
 
         $users = User::all();
         $products = Product::all();
-        $orders = UserOrder::all();
+        $orders = UserOrder::with('user')->orderBy('created_at', 'desc')->paginate(10);
         return view('admin-dashboard.orders', compact('orders', 'users', 'products'));
     }
 

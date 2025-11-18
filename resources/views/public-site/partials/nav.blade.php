@@ -11,7 +11,7 @@
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-logo">
-            <img src="assets/cali.jpg" alt="Callista LK">
+            <img src="assets/images/logo.png" alt="Callista LK">
             <span class="logo-text">Callista<span class="highlight">LK</span></span>
         </div>
 

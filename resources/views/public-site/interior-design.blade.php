@@ -613,7 +613,7 @@
         }
         
         // Preload critical images only
-        const criticalImages = ['../assets/cali.jpg'];
+        const criticalImages = ['../assets/images/logo.png'];
         criticalImages.forEach(src => {
             const link = document.createElement('link');
             link.rel = 'preload';

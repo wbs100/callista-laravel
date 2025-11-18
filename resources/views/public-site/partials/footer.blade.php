@@ -7,7 +7,7 @@
 
                     <a href="/" class="brand-logo">
                         <!-- <i class="fas fa-home"></i> -->
-                        <img src="assets/cali.jpg" alt="Callista LK">
+                        <img src="assets/images/logo.png" alt="Callista LK">
                         <span>CALISTALK</span>
                     </a>
                     <p>Creating extraordinary spaces that inspire and delight. Your vision, our expertise,

@@ -84,7 +84,7 @@
         <!-- Left Side - Image/Brand -->
         <div class="auth-left">
             <div class="auth-brand">
-                <img src="{{ asset('assets/cali.jpg') }}" alt="Callista LK">
+                <img src="{{ asset('assets/images/logo.png') }}" alt="Callista LK">
                 <h1>Callista<span>LK</span></h1>
             </div>
             <div class="auth-content">

@@ -277,6 +277,21 @@
     border-color: var(--primary-color);
 }
 
+.pagination-btn.disabled {
+    background: var(--light-gray);
+    color: var(--gray-color);
+    border-color: var(--border-color);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-btn.disabled:hover {
+    background: var(--light-gray);
+    color: var(--gray-color);
+    border-color: var(--border-color);
+    transform: none;
+}
+
 .table-actions {
     display: flex;
     justify-content: between;

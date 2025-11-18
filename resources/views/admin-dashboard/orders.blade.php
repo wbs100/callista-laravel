@@ -260,6 +260,9 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Pagination -->
+            {{ $orders->links('vendor.pagination.admin-pagination') }}
         </div>
     </div>
 </div>

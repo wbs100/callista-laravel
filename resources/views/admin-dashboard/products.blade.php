@@ -157,7 +157,7 @@
                     @if($product->images && $product->images->count() > 0)
                         <img src="{{ asset('storage/' . $product->images->first()->image) }}" alt="{{ $product->name }}">
                     @else
-                        <img src="{{ asset('assets/no-image.png') }}" alt="{{ $product->name }}">
+                        <img src="#" alt="{{ $product->name }}">
                     @endif
                     
                     @if($product->old_price && $product->old_price > $product->new_price)
@@ -226,6 +226,9 @@
             </div>
             @endforelse
         </div>
+        
+        <!-- Pagination -->
+        {{ $products->links('vendor.pagination.admin-pagination') }}
     </div>
 </div>
 @endsection
