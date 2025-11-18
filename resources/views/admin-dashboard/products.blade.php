@@ -156,9 +156,12 @@
             <div class="product-card" data-product-id="{{ $product->id }}">
                 <div class="product-image">
                     @if($product->images && $product->images->count() > 0)
-                    <img src="{{ asset('storage/' . $product->images->first()->image) }}" alt="{{ $product->name }}">
+                    <img src="{{ asset($product->images->first()->image) }}" alt="{{ $product->name }}">
                     @else
-                    <img src="#" alt="{{ $product->name }}">
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-image"></i>
+                        <span>No Image</span>
+                    </div>
                     @endif
 
                     @if($product->old_price && $product->old_price > $product->new_price)
@@ -306,6 +309,21 @@
                 </div>
 
                 <div class="form-group full-width">
+                    <label for="product_image" class="form-label">Product Image</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="product_image" name="product_image" accept="image/*" class="file-input" style="display: none;">
+                        <div class="image-upload-area" onclick="document.getElementById('product_image').click();">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload image</p>
+                                <small>JPEG, PNG, JPG or GIF (max 2MB)</small>
+                            </div>
+                            <img id="image_preview" class="image-preview" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
                     <label for="description" class="form-label">Description *</label>
                     <textarea id="description" name="description" class="form-input" rows="3" required></textarea>
                 </div>
@@ -393,6 +411,27 @@
                 <div class="form-group">
                     <label for="edit_rating" class="form-label">Rating</label>
                     <input type="number" id="edit_rating" name="rating" class="form-input" min="0" max="5" step="1">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="edit_product_image" class="form-label">Product Image</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="edit_product_image" name="product_image" accept="image/*" class="file-input" style="display: none;">
+                        <div class="image-upload-area" onclick="document.getElementById('edit_product_image').click();">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload new image</p>
+                                <small>JPEG, PNG, JPG or GIF (max 2MB)</small>
+                            </div>
+                            <img id="edit_image_preview" class="image-preview" style="display: none;">
+                            <div id="current_image_container" class="current-image" style="display: none;">
+                                <img id="current_image" class="image-preview">
+                                <div class="image-overlay">
+                                    <span>Click to change image</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group full-width">
@@ -545,6 +584,118 @@
         transform: translateY(-2px);
         box-shadow: var(--shadow-md);
     }
+
+    /* Image Upload Styles */
+    .image-upload-container {
+        margin-top: 0.5rem;
+    }
+
+    .image-upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #fafafa;
+        position: relative;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-upload-area:hover {
+        border-color: var(--primary-color);
+        background: #f5f5f5;
+    }
+
+    .upload-placeholder {
+        color: var(--gray-color);
+    }
+
+    .upload-placeholder i {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--primary-color);
+        opacity: 0.7;
+    }
+
+    .upload-placeholder p {
+        margin: 0.5rem 0;
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+
+    .upload-placeholder small {
+        font-size: 0.875rem;
+        color: var(--gray-color);
+    }
+
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .current-image {
+        position: relative;
+        display: inline-block;
+    }
+
+    .current-image .image-preview {
+        opacity: 0.8;
+        transition: opacity 0.3s;
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 8px;
+    }
+
+    .current-image:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .current-image:hover .image-preview {
+        opacity: 0.6;
+    }
+
+    .image-overlay span {
+        color: white;
+        font-weight: 500;
+    }
+
+    .no-image-placeholder {
+        width: 100%;
+        height: 200px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .no-image-placeholder i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+    }
 </style>
 @endpush
 
@@ -569,14 +720,45 @@
             }
         });
 
+        // Image preview handling
+        $('#product_image').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#image_preview').attr('src', e.target.result).show();
+                    $('.upload-placeholder').hide();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $('#edit_product_image').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#edit_image_preview').attr('src', e.target.result).show();
+                    $('#current_image_container').hide();
+                    $('.upload-placeholder').hide();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
         // Create Product
         $('#addProductForm').submit(function(e) {
             e.preventDefault();
             
+            // Create FormData for file upload
+            const formData = new FormData(this);
+            
             $.ajax({
                 url: '{{ route("admin.products.store") }}',
                 method: 'POST',
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -633,6 +815,19 @@
                         $('#edit_rating').val(product.rating);
                         $('#edit_description').val(product.description);
                         
+                        // Handle current image display
+                        if (product.images && product.images.length > 0) {
+                            $('#current_image').attr('src', `${window.location.origin}/${product.images[0].image}`);
+                            $('#current_image_container').show();
+                            $('.upload-placeholder').hide();
+                        } else {
+                            $('#current_image_container').hide();
+                            $('.upload-placeholder').show();
+                        }
+                        
+                        // Reset image previews
+                        $('#edit_image_preview').hide();
+                        
                         $('#editProductModal').fadeIn(300);
                     }
                 },
@@ -647,10 +842,16 @@
             e.preventDefault();
             let productId = $('#edit_product_id').val();
             
+            // Create FormData for file upload
+            const formData = new FormData(this);
+            formData.append('_method', 'PUT');
+            
             $.ajax({
                 url: `/admin/products/${productId}`,
-                method: 'PUT',
-                data: $(this).serialize(),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -719,6 +920,12 @@
         function resetForms() {
             $('#addProductForm')[0].reset();
             $('#editProductForm')[0].reset();
+            
+            // Reset image previews
+            $('#image_preview').hide();
+            $('#edit_image_preview').hide();
+            $('#current_image_container').hide();
+            $('.upload-placeholder').show();
         }
 
         function showNotification(message, type = 'success') {

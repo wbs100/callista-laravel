@@ -103,6 +103,7 @@ class AdminController extends Controller
             'size' => 'required|string|max:100',
             'stock_status' => 'required|in:in_stock,low_stock,out_of_stock',
             'rating' => 'nullable|numeric|min:0|max:5',
+            'product_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Generate unique barcode
@@ -124,6 +125,28 @@ class AdminController extends Controller
             'tags' => ['furniture', 'quality'],
         ]);
 
+        // Handle image upload
+        if ($request->hasFile('product_image')) {
+            $image = $request->file('product_image');
+            $imageName = time() . '_' . $product->id . '.' . $image->getClientOriginalExtension();
+            
+            // Create directory if it doesn't exist
+            $uploadPath = public_path('uploads/products/images');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            
+            // Move file to public directory
+            $image->move($uploadPath, $imageName);
+            $imagePath = 'uploads/products/images/' . $imageName;
+            
+            // Create product image record
+            \App\Models\ProductImage::create([
+                'product_id' => $product->id,
+                'image' => $imagePath,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Product created successfully!',
@@ -137,6 +160,9 @@ class AdminController extends Controller
         if (auth()->user()->role !== 'admin') {
             return response()->json(['error' => 'Access denied'], 403);
         }
+
+        // Load product with images
+        $product->load('images');
 
         return response()->json([
             'success' => true,
@@ -163,6 +189,7 @@ class AdminController extends Controller
             'size' => 'required|string|max:100',
             'stock_status' => 'required|in:in_stock,low_stock,out_of_stock',
             'rating' => 'nullable|numeric|min:0|max:5',
+            'product_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $product->update([
@@ -179,6 +206,39 @@ class AdminController extends Controller
             'rating' => $request->rating ?? $product->rating,
         ]);
 
+        // Handle image upload
+        if ($request->hasFile('product_image')) {
+            // Delete old image if exists
+            $oldImage = $product->images()->first();
+            if ($oldImage) {
+                $oldImagePath = public_path($oldImage->image);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+                $oldImage->delete();
+            }
+
+            // Upload new image
+            $image = $request->file('product_image');
+            $imageName = time() . '_' . $product->id . '.' . $image->getClientOriginalExtension();
+            
+            // Create directory if it doesn't exist
+            $uploadPath = public_path('uploads/products/images');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            
+            // Move file to public directory
+            $image->move($uploadPath, $imageName);
+            $imagePath = 'uploads/products/images/' . $imageName;
+            
+            // Create new product image record
+            \App\Models\ProductImage::create([
+                'product_id' => $product->id,
+                'image' => $imagePath,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully!',
@@ -193,6 +253,15 @@ class AdminController extends Controller
             return response()->json(['error' => 'Access denied'], 403);
         }
 
+        // Delete product images from filesystem
+        foreach ($product->images as $image) {
+            $imagePath = public_path($image->image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        // Delete product (cascade will delete images from database)
         $product->delete();
 
         return response()->json([
