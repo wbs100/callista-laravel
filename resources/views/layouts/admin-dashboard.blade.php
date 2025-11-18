@@ -658,21 +658,21 @@
                 <a href="/admin/users" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.users']) ? 'active' : '' }}">
                     <i class="nav-icon fas fa-users"></i>
                     <span class="nav-text">Users</span>
-                    <span class="nav-badge">127</span>
+                    <span class="nav-badge">{{ count($users) }}</span>
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/admin/products" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.products']) ? 'active' : '' }}">
                     <i class="nav-icon fas fa-box"></i>
                     <span class="nav-text">Products</span>
-                    <span class="nav-badge">45</span>
+                    <span class="nav-badge">{{ count($products) }}</span>
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/admin/orders" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.orders']) ? 'active' : '' }}">
                     <i class="nav-icon fas fa-shopping-cart"></i>
                     <span class="nav-text">Orders</span>
-                    <span class="nav-badge">23</span>
+                    <span class="nav-badge">{{ count($orders) }}</span>
                 </a>
             </div>
             <div class="nav-item">

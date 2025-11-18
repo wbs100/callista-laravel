@@ -19,10 +19,10 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                 </div>
-                <div class="stat-value">1,247</div>
+                <div class="stat-value">{{ count($orders) }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+23 today</span>
+                    <i class="fas fa-info-circle"></i>
+                    <span>All orders placed</span>
                 </div>
             </div>
 
@@ -33,10 +33,20 @@
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                 </div>
-                <div class="stat-value">LKR 1.2M</div>
+                @php
+                    $totalRevenue = 0;
+                    foreach($orders as $order) {
+                        if(isset($order->cart_data) && is_array($order->cart_data)) {
+                            foreach($order->cart_data as $item) {
+                                $totalRevenue += isset($item['price']) ? $item['price'] * (isset($item['quantity']) ? $item['quantity'] : 1) : 0;
+                            }
+                        }
+                    }
+                @endphp
+                <div class="stat-value">LKR {{ number_format($totalRevenue / 1000) }}K</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+18% this month</span>
+                    <i class="fas fa-chart-line"></i>
+                    <span>Total sales</span>
                 </div>
             </div>
 
@@ -47,7 +57,7 @@
                         <i class="fas fa-clock"></i>
                     </div>
                 </div>
-                <div class="stat-value">23</div>
+                <div class="stat-value">{{ $orders->where('status', 'pending')->count() }}</div>
                 <div class="stat-change neutral">
                     <i class="fas fa-minus"></i>
                     <span>Needs attention</span>
@@ -56,15 +66,15 @@
 
             <div class="stat-card info">
                 <div class="stat-header">
-                    <div class="stat-title">Avg Order Value</div>
+                    <div class="stat-title">Delivered</div>
                     <div class="stat-icon info">
-                        <i class="fas fa-calculator"></i>
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
-                <div class="stat-value">LKR 95K</div>
+                <div class="stat-value">{{ $orders->where('status', 'delivered')->count() }}</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>+12% from last month</span>
+                    <span>Completed orders</span>
                 </div>
             </div>
         </div>
@@ -76,28 +86,28 @@
             <div class="summary-icon summary-pending">
                 <i class="fas fa-clock"></i>
             </div>
-            <div class="summary-value">23</div>
+            <div class="summary-value">{{ $orders->where('status', 'pending')->count() }}</div>
             <div class="summary-label">Pending Orders</div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-processing">
                 <i class="fas fa-cogs"></i>
             </div>
-            <div class="summary-value">45</div>
+            <div class="summary-value">{{ $orders->where('status', 'processing')->count() }}</div>
             <div class="summary-label">Processing</div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-shipped">
                 <i class="fas fa-truck"></i>
             </div>
-            <div class="summary-value">67</div>
+            <div class="summary-value">{{ $orders->where('status', 'shipped')->count() }}</div>
             <div class="summary-label">Shipped</div>
         </div>
         <div class="summary-card">
             <div class="summary-icon summary-delivered">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="summary-value">1,112</div>
+            <div class="summary-value">{{ $orders->where('status', 'delivered')->count() }}</div>
             <div class="summary-label">Delivered</div>
         </div>
     </div>
@@ -199,209 +209,54 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-001</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">AM</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Amara Mendis</div>
-                                        <div class="customer-email">amara@email.com</div>
+                        @forelse($orders as $order)
+                            <tr>
+                                <td>
+                                    <a href="#" class="order-id">#ORD-{{ $order->id }}</a>
+                                </td>
+                                <td>
+                                    <div class="customer-info">
+                                        <div class="customer-avatar">
+                                            {{ strtoupper(substr($order->user->name, 0, 2)) }}
+                                        </div>
+                                        <div class="customer-details">
+                                            <div class="customer-name">{{ $order->user->name }}</div>
+                                            <div class="customer-email">{{ $order->user->email }}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>Modern Dining Table, Chair Set</td>
-                            <td class="order-amount">LKR 220,000</td>
-                            <td>
-                                <span class="order-status status-shipped">Shipped</span>
-                            </td>
-                            <td class="order-date">2024-01-15</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-002</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">KS</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Kasun Silva</div>
-                                        <div class="customer-email">kasun@email.com</div>
+                                </td>
+                                <td>{{ $order->product_details ?? 'N/A' }}</td>
+                                <td class="order-amount">LKR {{ number_format($order->total_amount, 0) }}</td>
+                                <td>
+                                    <span class="order-status status-{{ strtolower($order->status) }}">
+                                        {{ ucfirst($order->status) }}
+                                    </span>
+                                </td>
+                                <td class="order-date">{{ $order->created_at->format('Y-m-d') }}</td>
+                                <td>
+                                    <div class="order-actions">
+                                        <button class="btn-action btn-view" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-action btn-edit-order" title="Edit Order">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-action btn-delete-order" title="Delete Order">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
-                                </div>
-                            </td>
-                            <td>Luxury Sofa Set</td>
-                            <td class="order-amount">LKR 185,000</td>
-                            <td>
-                                <span class="order-status status-processing">Processing</span>
-                            </td>
-                            <td class="order-date">2024-01-14</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-003</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">NP</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Nimali Perera</div>
-                                        <div class="customer-email">nimali@email.com</div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center" style="padding: 40px;">
+                                    <div style="opacity: 0.6;">
+                                        <i class="fas fa-shopping-cart" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                        <p>No orders found</p>
                                     </div>
-                                </div>
-                            </td>
-                            <td>Complete Bedroom Set</td>
-                            <td class="order-amount">LKR 275,000</td>
-                            <td>
-                                <span class="order-status status-delivered">Delivered</span>
-                            </td>
-                            <td class="order-date">2024-01-13</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-004</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">RJ</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Roshan Jayasinghe</div>
-                                        <div class="customer-email">roshan@email.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Designer Coffee Table</td>
-                            <td class="order-amount">LKR 65,000</td>
-                            <td>
-                                <span class="order-status status-pending">Pending</span>
-                            </td>
-                            <td class="order-date">2024-01-12</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-005</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">SW</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Saman Wickramasinghe</div>
-                                        <div class="customer-email">saman@email.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Ergonomic Office Chair</td>
-                            <td class="order-amount">LKR 45,000</td>
-                            <td>
-                                <span class="order-status status-shipped">Shipped</span>
-                            </td>
-                            <td class="order-date">2024-01-11</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>
-                                <a href="#" class="order-id">#ORD-2024-006</a>
-                            </td>
-                            <td>
-                                <div class="customer-info">
-                                    <div class="customer-avatar">TD</div>
-                                    <div class="customer-details">
-                                        <div class="customer-name">Tharaka De Silva</div>
-                                        <div class="customer-email">tharaka@email.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Dining Chairs Set (4)</td>
-                            <td class="order-amount">LKR 95,000</td>
-                            <td>
-                                <span class="order-status status-cancelled">Cancelled</span>
-                            </td>
-                            <td class="order-date">2024-01-10</td>
-                            <td>
-                                <div class="order-actions">
-                                    <button class="btn-action btn-view" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-action btn-edit-order" title="Edit Order">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete-order" title="Delete Order">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

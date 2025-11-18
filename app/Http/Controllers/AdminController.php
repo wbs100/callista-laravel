@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\UserOrder;
+use App\Models\Product;
 
 class AdminController extends Controller
 {
@@ -22,13 +25,17 @@ class AdminController extends Controller
         
         // You can add more admin-specific data here
         $adminData = [
-            'totalUsers' => \App\Models\User::count(),
-            'adminUsers' => \App\Models\User::where('role', 'admin')->count(),
-            'regularUsers' => \App\Models\User::where('role', 'user')->count(),
-            'recentUsers' => \App\Models\User::latest()->take(5)->get(),
+            'totalUsers' => User::count(),
+            'adminUsers' => User::where('role', 'admin')->count(),
+            'regularUsers' => User::where('role', 'user')->count(),
+            'recentUsers' => User::latest()->take(5)->get(),
         ];
 
-        return view('admin-dashboard.home', compact('userRole', 'adminData'));
+        $users = User::all();
+        $products = Product::all();
+        $orders = UserOrder::all();
+
+        return view('admin-dashboard.home', compact('userRole', 'adminData', 'users', 'products', 'orders'));
     }
 
     public function users()
@@ -38,8 +45,10 @@ class AdminController extends Controller
             return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
         }
 
-        $users = \App\Models\User::all();
-        return view('admin-dashboard.users', compact('users'));
+        $users = User::all();
+        $products = Product::all();
+        $orders = UserOrder::all();
+        return view('admin-dashboard.users', compact('users', 'products', 'orders'));
     }
 
     public function products()
@@ -49,8 +58,10 @@ class AdminController extends Controller
             return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
         }
 
-        $products = \App\Models\Product::all();
-        return view('admin-dashboard.products', compact('products'));
+        $users = User::all();
+        $products = Product::all();
+        $orders = UserOrder::all();
+        return view('admin-dashboard.products', compact('products', 'users', 'orders'));
     }
 
     public function orders()
@@ -60,8 +71,10 @@ class AdminController extends Controller
             return redirect()->route('dashboard')->with('error', 'Access denied. Admin privileges required.');
         }
 
-        $orders = \App\Models\UserOrder::all();
-        return view('admin-dashboard.orders', compact('orders'));
+        $users = User::all();
+        $products = Product::all();
+        $orders = UserOrder::all();
+        return view('admin-dashboard.orders', compact('orders', 'users', 'products'));
     }
 
     public function login()

@@ -12,17 +12,17 @@
         </h2>
 
         <div class="stats-grid">
-            <div class="stat-card">
+                        <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-title">Total Products</div>
                     <div class="stat-icon primary">
                         <i class="fas fa-box"></i>
                     </div>
                 </div>
-                <div class="stat-value">2,847</div>
+                <div class="stat-value">{{ count($products) }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+12 new products this week</span>
+                    <i class="fas fa-info-circle"></i>
+                    <span>All products in catalog</span>
                 </div>
             </div>
 
@@ -33,10 +33,10 @@
                         <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
-                <div class="stat-value">2,156</div>
+                <div class="stat-value">{{ $products->where('stock_status', 'in-stock')->count() }}</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>75.7% of total inventory</span>
+                    <span>{{ $products->count() > 0 ? round(($products->where('stock_status', 'in-stock')->count() / $products->count()) * 100, 1) : 0 }}% of total inventory</span>
                 </div>
             </div>
 
@@ -47,7 +47,7 @@
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                 </div>
-                <div class="stat-value">127</div>
+                <div class="stat-value">{{ $products->where('stock_status', 'low-stock')->count() }}</div>
                 <div class="stat-change neutral">
                     <i class="fas fa-minus"></i>
                     <span>Needs restocking</span>
@@ -56,15 +56,15 @@
 
             <div class="stat-card info">
                 <div class="stat-header">
-                    <div class="stat-title">Categories</div>
+                    <div class="stat-title">Out of Stock</div>
                     <div class="stat-icon info">
-                        <i class="fas fa-tags"></i>
+                        <i class="fas fa-times-circle"></i>
                     </div>
                 </div>
-                <div class="stat-value">24</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+2 new categories</span>
+                <div class="stat-value">{{ $products->where('stock_status', 'out-of-stock')->count() }}</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Unavailable products</span>
                 </div>
             </div>
         </div>
@@ -151,236 +151,80 @@
         </div>
 
         <div class="product-grid">
-            <!-- Product Card 1 -->
+            @forelse($products as $product)
             <div class="product-card">
                 <div class="product-image">
-                    <img src="../assets/sofa.png" alt="Modern Dining Table">
-                    <div class="product-badge featured">Featured</div>
+                    @if($product->images && $product->images->count() > 0)
+                        <img src="{{ asset('storage/' . $product->images->first()->image) }}" alt="{{ $product->name }}">
+                    @else
+                        <img src="{{ asset('assets/no-image.png') }}" alt="{{ $product->name }}">
+                    @endif
+                    
+                    @if($product->old_price && $product->old_price > $product->new_price)
+                        <div class="product-badge sale">Sale</div>
+                    @elseif($product->created_at >= now()->subDays(30))
+                        <div class="product-badge">New</div>
+                    @else
+                        <div class="product-badge featured">Featured</div>
+                    @endif
                 </div>
                 <div class="product-info">
-                    <div class="product-category">Tables</div>
-                    <h3 class="product-name">Modern Dining Table</h3>
+                    <div class="product-category">{{ ucfirst($product->type) }}</div>
+                    <h3 class="product-name">{{ $product->name }}</h3>
                     <div class="product-price">
-                        <span class="price-current">LKR 125,000</span>
-                        <span class="price-original">LKR 140,000</span>
+                        <span class="price-current">LKR {{ number_format($product->new_price) }}</span>
+                        @if($product->old_price && $product->old_price > $product->new_price)
+                            <span class="price-original">LKR {{ number_format($product->old_price) }}</span>
+                        @endif
                     </div>
                     <div class="product-stats">
                         <div class="stat-item">
-                            <div class="stat-label">Stock</div>
+                            <div class="stat-label">Stock Status</div>
                             <div class="stat-value">
-                                <span class="stock-indicator stock-low"></span>
-                                3 units
+                                @php
+                                    $stockClass = 'stock-medium';
+                                    if($product->stock_status == 'out-of-stock') $stockClass = 'stock-out';
+                                    elseif($product->stock_status == 'low-stock') $stockClass = 'stock-low';
+                                    elseif($product->stock_status == 'in-stock') $stockClass = 'stock-high';
+                                @endphp
+                                <span class="stock-indicator {{ $stockClass }}"></span>
+                                {{ ucwords(str_replace('-', ' ', $product->stock_status)) }}
                             </div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">147</div>
+                            <div class="stat-label">Rating</div>
+                            <div class="stat-value">
+                                @if($product->rating)
+                                    {{ $product->rating }}/5 ⭐
+                                @else
+                                    No ratings
+                                @endif
+                            </div>
                         </div>
                     </div>
                     <div class="product-actions">
-                        <button class="btn-product btn-edit">
+                        <button class="btn-product btn-edit" title="Edit {{ $product->name }}">
                             <i class="fas fa-edit"></i>
                             Edit
                         </button>
-                        <button class="btn-product btn-delete">
+                        <button class="btn-product btn-delete" title="Delete {{ $product->name }}">
                             <i class="fas fa-trash"></i>
                             Delete
                         </button>
                     </div>
                 </div>
             </div>
-
-            <!-- Product Card 2 -->
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="../assets/bed.png" alt="Ergonomic Office Chair">
-                    <div class="product-badge">Popular</div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">Chairs</div>
-                    <h3 class="product-name">Ergonomic Office Chair</h3>
-                    <div class="product-price">
-                        <span class="price-current">LKR 45,000</span>
-                    </div>
-                    <div class="product-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Stock</div>
-                            <div class="stat-value">
-                                <span class="stock-indicator stock-low"></span>
-                                2 units
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">89</div>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-product btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-product btn-delete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
+            @empty
+            <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #666;">
+                <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                <h3>No products found</h3>
+                <p>Add your first product to get started.</p>
+                <a href="#" class="btn-add-product" style="margin-top: 1rem; display: inline-block;">
+                    <i class="fas fa-plus"></i>
+                    Add Product
+                </a>
             </div>
-
-            <!-- Product Card 3 -->
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="../assets/funi (1).jpeg" alt="Luxury Sofa Set">
-                    <div class="product-badge sale">Sale</div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">Living Room</div>
-                    <h3 class="product-name">Luxury Sofa Set</h3>
-                    <div class="product-price">
-                        <span class="price-current">LKR 185,000</span>
-                        <span class="price-original">LKR 210,000</span>
-                    </div>
-                    <div class="product-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Stock</div>
-                            <div class="stat-value">
-                                <span class="stock-indicator stock-medium"></span>
-                                8 units
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">234</div>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-product btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-product btn-delete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Product Card 4 -->
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="../assets/funi (2).jpeg" alt="Complete Bedroom Set">
-                    <div class="product-badge">New</div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">Bedroom</div>
-                    <h3 class="product-name">Complete Bedroom Set</h3>
-                    <div class="product-price">
-                        <span class="price-current">LKR 275,000</span>
-                    </div>
-                    <div class="product-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Stock</div>
-                            <div class="stat-value">
-                                <span class="stock-indicator stock-high"></span>
-                                15 units
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">67</div>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-product btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-product btn-delete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Product Card 5 -->
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="../assets/sofa.png" alt="Designer Coffee Table">
-                    <div class="product-badge featured">Featured</div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">Tables</div>
-                    <h3 class="product-name">Designer Coffee Table</h3>
-                    <div class="product-price">
-                        <span class="price-current">LKR 65,000</span>
-                        <span class="price-original">LKR 75,000</span>
-                    </div>
-                    <div class="product-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Stock</div>
-                            <div class="stat-value">
-                                <span class="stock-indicator stock-high"></span>
-                                22 units
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">156</div>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-product btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-product btn-delete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Product Card 6 -->
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="../assets/bed.png" alt="Dining Chairs Set">
-                    <div class="product-badge">Popular</div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">Chairs</div>
-                    <h3 class="product-name">Dining Chairs Set (4)</h3>
-                    <div class="product-price">
-                        <span class="price-current">LKR 95,000</span>
-                    </div>
-                    <div class="product-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Stock</div>
-                            <div class="stat-value">
-                                <span class="stock-indicator stock-high"></span>
-                                18 units
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Sales</div>
-                            <div class="stat-value">123</div>
-                        </div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-product btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-product btn-delete">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
+            @endforelse
         </div>
     </div>
 </div>

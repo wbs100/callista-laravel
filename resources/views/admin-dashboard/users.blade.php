@@ -19,52 +19,52 @@
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <div class="stat-value">4,856</div>
+                <div class="stat-value">{{ count($users) }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+15.3% from last month</span>
+                    <i class="fas fa-info-circle"></i>
+                    <span>All registered users</span>
                 </div>
             </div>
 
             <div class="stat-card success">
                 <div class="stat-header">
-                    <div class="stat-title">Active Users</div>
+                    <div class="stat-title">Regular Users</div>
                     <div class="stat-icon success">
                         <i class="fas fa-user-check"></i>
                     </div>
                 </div>
-                <div class="stat-value">4,127</div>
+                <div class="stat-value">{{ $users->where('role', 'user')->count() }}</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>+8.2% from last month</span>
+                    <span>Customer accounts</span>
                 </div>
             </div>
 
             <div class="stat-card warning">
                 <div class="stat-header">
-                    <div class="stat-title">New Registrations</div>
+                    <div class="stat-title">Admin Users</div>
                     <div class="stat-icon warning">
-                        <i class="fas fa-user-plus"></i>
+                        <i class="fas fa-user-shield"></i>
                     </div>
                 </div>
-                <div class="stat-value">247</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+23.1% from last week</span>
+                <div class="stat-value">{{ $users->where('role', 'admin')->count() }}</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin accounts</span>
                 </div>
             </div>
 
             <div class="stat-card info">
                 <div class="stat-header">
-                    <div class="stat-title">Premium Users</div>
+                    <div class="stat-title">Recent Users</div>
                     <div class="stat-icon info">
-                        <i class="fas fa-crown"></i>
+                        <i class="fas fa-clock"></i>
                     </div>
                 </div>
-                <div class="stat-value">856</div>
+                <div class="stat-value">{{ $users->where('created_at', '>=', now()->subDays(7))->count() }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+5.7% from last month</span>
+                    <i class="fas fa-calendar-week"></i>
+                    <span>Last 7 days</span>
                 </div>
             </div>
         </div>
@@ -125,146 +125,66 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @forelse($users as $user)
                     <tr class="user-row">
                         <td>
                             <div class="user-info">
-                                <div class="user-avatar-sm">JP</div>
+                                <div class="user-avatar-sm">
+                                    {{ strtoupper(substr($user->name, 0, 2)) }}
+                                </div>
                                 <div class="user-details">
-                                    <h4>John Perera</h4>
-                                    <p>Premium Customer</p>
+                                    <h4>{{ $user->name }}</h4>
+                                    <p>{{ ucfirst($user->role) }} {{ $user->role == 'user' ? 'Customer' : 'User' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td>john.perera@email.com</td>
-                        <td>2024-01-15</td>
-                        <td><span class="status-badge status-active">Active</span></td>
-                        <td>23</td>
-                        <td>LKR 485,000</td>
+                        <td>{{ $user->email }}</td>
+                        <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                        <td>
+                            @if($user->email_verified_at)
+                                <span class="status-badge status-active">Active</span>
+                            @else
+                                <span class="status-badge status-pending">Pending</span>
+                            @endif
+                        </td>
+                        <td>{{ $orders->where('user_id', $user->id)->count() }}</td>
+                        <td>
+                            @php
+                                $userOrders = $orders->where('user_id', $user->id);
+                                $totalSpent = 0;
+                                foreach($userOrders as $order) {
+                                    if(isset($order->cart_data) && is_array($order->cart_data)) {
+                                        foreach($order->cart_data as $item) {
+                                            $totalSpent += isset($item['price']) ? $item['price'] * (isset($item['quantity']) ? $item['quantity'] : 1) : 0;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            LKR {{ number_format($totalSpent) }}
+                        </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-sm btn-primary-sm">
+                                <button class="btn-sm btn-primary-sm" title="Edit User">
                                     <i class="fas fa-edit"></i>
                                     Edit
                                 </button>
-                                <button class="btn-sm btn-danger-sm">
+                                @if($user->role !== 'admin')
+                                <button class="btn-sm btn-danger-sm" title="Delete User">
                                     <i class="fas fa-trash"></i>
                                     Delete
                                 </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
-                    <tr class="user-row">
-                        <td>
-                            <div class="user-info">
-                                <div class="user-avatar-sm">SF</div>
-                                <div class="user-details">
-                                    <h4>Sarah Fernando</h4>
-                                    <p>Regular Customer</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>sarah.fernando@email.com</td>
-                        <td>2024-02-20</td>
-                        <td><span class="status-badge status-active">Active</span></td>
-                        <td>12</td>
-                        <td>LKR 325,000</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-sm btn-primary-sm">
-                                    <i class="fas fa-edit"></i>
-                                    Edit
-                                </button>
-                                <button class="btn-sm btn-danger-sm">
-                                    <i class="fas fa-trash"></i>
-                                    Delete
-                                </button>
-                            </div>
+                    @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #666;">
+                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            No users found
                         </td>
                     </tr>
-                    <tr class="user-row">
-                        <td>
-                            <div class="user-info">
-                                <div class="user-avatar-sm">AR</div>
-                                <div class="user-details">
-                                    <h4>Amal Rajapaksa</h4>
-                                    <p>New Customer</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>amal.rajapaksa@email.com</td>
-                        <td>2024-10-25</td>
-                        <td><span class="status-badge status-pending">Pending</span></td>
-                        <td>1</td>
-                        <td>LKR 45,000</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-sm btn-primary-sm">
-                                    <i class="fas fa-edit"></i>
-                                    Edit
-                                </button>
-                                <button class="btn-sm btn-danger-sm">
-                                    <i class="fas fa-trash"></i>
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="user-row">
-                        <td>
-                            <div class="user-info">
-                                <div class="user-avatar-sm">NS</div>
-                                <div class="user-details">
-                                    <h4>Nimal Silva</h4>
-                                    <p>Regular Customer</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>nimal.silva@email.com</td>
-                        <td>2024-03-10</td>
-                        <td><span class="status-badge status-inactive">Inactive</span></td>
-                        <td>8</td>
-                        <td>LKR 180,000</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-sm btn-primary-sm">
-                                    <i class="fas fa-edit"></i>
-                                    Edit
-                                </button>
-                                <button class="btn-sm btn-danger-sm">
-                                    <i class="fas fa-trash"></i>
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="user-row">
-                        <td>
-                            <div class="user-info">
-                                <div class="user-avatar-sm">DW</div>
-                                <div class="user-details">
-                                    <h4>Dilini Wickramasinghe</h4>
-                                    <p>Premium Customer</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>dilini.w@email.com</td>
-                        <td>2024-01-28</td>
-                        <td><span class="status-badge status-active">Active</span></td>
-                        <td>31</td>
-                        <td>LKR 620,000</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-sm btn-primary-sm">
-                                    <i class="fas fa-edit"></i>
-                                    Edit
-                                </button>
-                                <button class="btn-sm btn-danger-sm">
-                                    <i class="fas fa-trash"></i>
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
