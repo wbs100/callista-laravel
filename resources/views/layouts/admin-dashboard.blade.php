@@ -647,8 +647,8 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i class="fas fa-cube"></i>
+            <div class="">
+                <img src="{{ asset('assets/images/logo.png') }}" alt="" style="width: 24px; height: 24px;">
             </div>
             <div class="sidebar-title">Callista Admin</div>
         </div>
