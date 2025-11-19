@@ -310,4 +310,124 @@ class AdminController extends Controller
             'message' => 'Product deleted successfully!'
         ]);
     }
+
+    // Order management methods
+    public function orderDetails(UserOrder $order)
+    {
+        // Ensure only admins can access
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            // Load order with user relationship
+            $order->load(['user']);
+            
+            // Ensure JSON fields are properly formatted
+            if (is_string($order->cart_data)) {
+                $order->cart_data = json_decode($order->cart_data, true);
+            }
+            
+            if (is_string($order->billing_data)) {
+                $order->billing_data = json_decode($order->billing_data, true);
+            }
+            
+            if (is_string($order->payment_data)) {
+                $order->payment_data = json_decode($order->payment_data, true);
+            }
+
+            return response()->json([
+                'success' => true,
+                'order' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading order details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateOrderStatus(Request $request, UserOrder $order)
+    {
+        // Ensure only admins can access
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            $request->validate([
+                'status' => 'required|in:0,1,processing,shipped,delivered,cancelled,payment_pending,payment_failed,refunded',
+                'payment_mode' => 'nullable|in:card_payment,bank_transfer,cash_on_delivery',
+                'order_notes' => 'nullable|string|max:1000',
+                'contact_info' => 'nullable|string|max:255'
+            ]);
+
+            // Update order
+            $updateData = [
+                'status' => $request->status,
+                'updated_at' => now()
+            ];
+
+            if ($request->has('payment_mode') && $request->payment_mode) {
+                $updateData['payment_mode'] = $request->payment_mode;
+            }
+
+            if ($request->has('order_notes')) {
+                $updateData['order_notes'] = $request->order_notes;
+            }
+
+            if ($request->has('contact_info')) {
+                $updateData['contact_info'] = $request->contact_info;
+            }
+
+            $order->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order updated successfully!',
+                'order' => $order->fresh()
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->errors())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyOrder(UserOrder $order)
+    {
+        // Ensure only admins can access
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            // Prevent deletion of completed orders
+            if ($order->status === 1 || $order->status === true) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete completed orders'
+                ], 400);
+            }
+
+            $order->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

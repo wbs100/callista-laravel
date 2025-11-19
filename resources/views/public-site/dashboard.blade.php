@@ -130,11 +130,11 @@
         <div class="recent-orders">
             <div class="orders-header">
                 Your Recent Purchases
-                @if($userData['recentOrders']->count() > 0)
+                {{-- @if($userData['recentOrders']->count() > 0)
                     <a href="#" class="view-all-orders" style="float: right; color: #667eea; text-decoration: none; font-size: 0.9rem;">
                         <i class="fas fa-arrow-right"></i> View All Orders
                     </a>
-                @endif
+                @endif --}}
             </div>
 
             @if($userData['recentOrders']->count() > 0)

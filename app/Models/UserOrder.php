@@ -20,6 +20,8 @@ class UserOrder extends Model
         'payment_mode',
         'payment_data',
         'status',
+        'order_status',
+        'payment_status',
     ];
 
     protected $casts = [
@@ -27,4 +29,21 @@ class UserOrder extends Model
         'payment_data' => 'array',
         'cart_data' => 'array',
     ];
+
+    /**
+     * Get the user that owns the order
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the billing data for this order from the billing_data JSON column
+     * Since billing_data is stored as JSON in the orders table
+     */
+    public function getBillingDataAttribute($value)
+    {
+        return $value ? json_decode($value, true) : null;
+    }
 }

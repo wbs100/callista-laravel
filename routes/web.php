@@ -152,6 +152,11 @@ Route::middleware([
     Route::get('/admin/products', [AdminController::class, 'products'])->name('admin.products');
     Route::get('/admin/orders', [AdminController::class, 'orders'])->name('admin.orders');
     
+    // Order management routes
+    Route::get('/admin/orders/{order}/details', [AdminController::class, 'orderDetails'])->name('admin.orders.details');
+    Route::put('/admin/orders/{order}/update-status', [AdminController::class, 'updateOrderStatus'])->name('admin.orders.update-status');
+    Route::delete('/admin/orders/{order}', [AdminController::class, 'destroyOrder'])->name('admin.orders.destroy');
+    
     // Product CRUD routes
     Route::post('/admin/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::get('/admin/products/{product}/edit', [AdminController::class, 'editProduct'])->name('admin.products.edit');

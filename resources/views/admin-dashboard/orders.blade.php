@@ -36,14 +36,12 @@
                 @php
                     $totalRevenue = 0;
                     foreach($orders as $order) {
-                        if(isset($order->cart_data) && is_array($order->cart_data)) {
-                            foreach($order->cart_data as $item) {
-                                $totalRevenue += isset($item['price']) ? $item['price'] * (isset($item['quantity']) ? $item['quantity'] : 1) : 0;
-                            }
+                        if(isset($order->cart_data['total'])) {
+                            $totalRevenue += $order->cart_data['total'];
                         }
                     }
                 @endphp
-                <div class="stat-value">LKR {{ number_format($totalRevenue / 1000) }}K</div>
+                <div class="stat-value">LKR {{ number_format($totalRevenue / 1000, 1) }}K</div>
                 <div class="stat-change positive">
                     <i class="fas fa-chart-line"></i>
                     <span>Total sales</span>
@@ -57,7 +55,17 @@
                         <i class="fas fa-clock"></i>
                     </div>
                 </div>
-                <div class="stat-value">{{ $orders->where('status', 'pending')->count() }}</div>
+                @php
+                    $pendingCount = $orders->filter(function($order) {
+                        return $order->status === false || $order->status === 'pending' || 
+                               (isset($order->payment_data['status']) && $order->payment_data['status'] === 'pending');
+                    })->count();
+                    
+                    $completedCount = $orders->filter(function($order) {
+                        return $order->status === true || $order->status === 'completed' || $order->status === 'delivered';
+                    })->count();
+                @endphp
+                <div class="stat-value">{{ $pendingCount }}</div>
                 <div class="stat-change neutral">
                     <i class="fas fa-minus"></i>
                     <span>Needs attention</span>
@@ -66,12 +74,12 @@
 
             <div class="stat-card info">
                 <div class="stat-header">
-                    <div class="stat-title">Delivered</div>
+                    <div class="stat-title">Completed</div>
                     <div class="stat-icon info">
                         <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
-                <div class="stat-value">{{ $orders->where('status', 'delivered')->count() }}</div>
+                <div class="stat-value">{{ $completedCount }}</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
                     <span>Completed orders</span>
@@ -212,7 +220,7 @@
                         @forelse($orders as $order)
                             <tr>
                                 <td>
-                                    <a href="#" class="order-id">#ORD-{{ $order->id }}</a>
+                                    <a href="#" class="order-id">#{{ $order->id }}</a>
                                 </td>
                                 <td>
                                     <div class="customer-info">
@@ -225,23 +233,76 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ $order->product_details ?? 'N/A' }}</td>
-                                <td class="order-amount">LKR {{ number_format($order->total_amount, 0) }}</td>
                                 <td>
-                                    <span class="order-status status-{{ strtolower($order->status) }}">
-                                        {{ ucfirst($order->status) }}
+                                    <div class="products-list">
+                                        @if(isset($order->cart_data['items']) && is_array($order->cart_data['items']))
+                                            @foreach($order->cart_data['items'] as $item)
+                                                <div class="product-item">
+                                                    <span class="product-name">{{ $item['product']['name'] ?? 'Unknown Product' }}</span>
+                                                    <span class="product-quantity">×{{ $item['quantity'] ?? 1 }}</span>
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <span class="text-muted">No products</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="order-amount text-nowrap">
+                                    LKR {{ number_format($order->cart_data['total'] ?? 0) }}
+                                    @if(isset($order->cart_data['discount']) && $order->cart_data['discount'] > 0)
+                                        <small class="discount-info text-nowrap">
+                                            <br><span class="text-success">-LKR {{ number_format($order->cart_data['discount']) }} saved</span>
+                                        </small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                        // Handle different status formats
+                                        if (is_bool($order->status)) {
+                                            $status = $order->status ? 'completed' : 'pending';
+                                            $statusText = $order->status ? 'Completed' : 'Pending';
+                                        } elseif (is_numeric($order->status)) {
+                                            $status = $order->status == 1 ? 'completed' : 'pending';
+                                            $statusText = $order->status == 1 ? 'Completed' : 'Pending';
+                                        } else {
+                                            $status = $order->status ?? 'pending';
+                                            // Convert status to display text
+                                            $statusText = match($status) {
+                                                'processing' => 'Processing',
+                                                'shipped' => 'Shipped', 
+                                                'delivered' => 'Delivered',
+                                                'cancelled' => 'Cancelled',
+                                                'payment_pending' => 'Payment Pending',
+                                                'payment_failed' => 'Payment Failed',
+                                                'refunded' => 'Refunded',
+                                                'completed' => 'Completed',
+                                                default => 'Pending'
+                                            };
+                                        }
+                                        
+                                        // Check payment data for additional context
+                                        if (isset($order->payment_data['status']) && $order->payment_data['status'] === 'pending' && $status === 'pending') {
+                                            $status = 'payment_pending';
+                                            $statusText = 'Payment Pending';
+                                        }
+                                    @endphp
+                                    <span class="order-status text-nowrap status-{{ strtolower(str_replace(['_', ' '], '-', $status)) }}">
+                                        {{ $statusText }}
                                     </span>
                                 </td>
-                                <td class="order-date">{{ $order->created_at->format('Y-m-d') }}</td>
+                                <td class="order-date text-nowrap">{{ $order->created_at->format('Y-m-d') }}</td>
                                 <td>
                                     <div class="order-actions">
-                                        <button class="btn-action btn-view" title="View Details">
+                                        <button class="btn-action btn-view" title="View Details" 
+                                                onclick="viewOrderDetails({{ $order->id }})">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn-action btn-edit-order" title="Edit Order">
+                                        <button class="btn-action btn-edit-order" title="Edit Order Status" 
+                                                onclick="editOrderStatus({{ $order->id }}, '{{ $status }}')">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn-action btn-delete-order" title="Delete Order">
+                                        <button class="btn-action btn-delete-order" title="Delete Order" 
+                                                onclick="deleteOrder({{ $order->id }})">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -266,4 +327,728 @@
         </div>
     </div>
 </div>
+
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-receipt"></i> Order Details</h2>
+            <span class="close" onclick="closeModal('orderDetailsModal')">&times;</span>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+            <!-- Order details will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Edit Order Status Modal -->
+<div id="editOrderModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-edit"></i> Edit Order Status</h2>
+            <span class="close" onclick="closeModal('editOrderModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editOrderForm">
+                <input type="hidden" id="editOrderId">
+                <div class="form-group">
+                    <label class="form-label">Order Status</label>
+                    <select id="editOrderStatus" class="form-select">
+                        <option value="0">Pending</option>
+                        <option value="1">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Mode</label>
+                    <select id="editPaymentMode" class="form-select">
+                        <option value="">Select Payment Mode</option>
+                        <option value="card_payment">Credit/Debit Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash_on_delivery">Cash on Delivery</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Order Notes</label>
+                    <textarea id="editOrderNotes" class="form-input" rows="3" placeholder="Add any notes about this order..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact Information</label>
+                    <input type="text" id="editContactInfo" class="form-input" placeholder="Customer contact information">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editOrderModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Product List Styles */
+.products-list {
+    max-width: 200px;
+}
+
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 2px 0;
+}
+
+.product-name {
+    font-size: 0.9rem;
+    color: #374151;
+    flex: 1;
+    margin-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-quantity {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 600;
+    background: #f3f4f6;
+    padding: 1px 6px;
+    border-radius: 12px;
+}
+
+.discount-info {
+    font-size: 0.75rem;
+    color: #059669 !important;
+}
+
+/* Status Styles */
+.order-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pending,
+.status-payment-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-processing {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-shipped {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.status-completed,
+.status-delivered {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-payment-failed {
+    background: #fecaca;
+    color: #b91c1c;
+}
+
+.status-refunded {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close {
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.close:hover {
+    opacity: 0.7;
+}
+
+.modal-body {
+    padding: 30px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.btn-secondary,
+.btn-primary {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-select,
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-select:focus,
+.form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+textarea.form-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* SweetAlert Custom Styles */
+.swal2-popup.swal-popup {
+    border-radius: 12px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.swal2-title.swal-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+}
+
+.swal2-content.swal-content {
+    font-size: 1rem !important;
+    color: #6b7280 !important;
+}
+
+.swal2-confirm.swal-confirm-btn {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-confirm.swal-confirm-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+}
+
+.swal2-cancel.swal-cancel-btn {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-cancel.swal-cancel-btn:hover {
+    background: #e5e7eb !important;
+    transform: translateY(-1px) !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+
+.swal2-icon.swal2-success {
+    border-color: #059669 !important;
+    color: #059669 !important;
+}
+
+.swal2-icon.swal2-error {
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+}
+
+/* Loading animation for SweetAlert */
+.swal2-loader {
+    border-color: #667eea transparent #667eea transparent !important;
+}
+</style>
+
+<script>
+// Order management functions
+function viewOrderDetails(orderId) {
+    // Show loading state
+    document.getElementById('orderDetailsContent').innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea;"></i>
+            <p style="margin-top: 16px; color: #6b7280;">Loading order details...</p>
+        </div>
+    `;
+    
+    document.getElementById('orderDetailsModal').style.display = 'block';
+    
+    // Fetch order details (you'll need to create this route)
+    fetch(`/admin/orders/${orderId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('orderDetailsContent').innerHTML = formatOrderDetails(data.order);
+            } else {
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 16px;"></i>
+                        <p>Error loading order details</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('orderDetailsContent').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 16px;"></i>
+                    <p>Error loading order details</p>
+                </div>
+            `;
+        });
+}
+
+function formatOrderDetails(order) {
+    let itemsHtml = '';
+    if (order.cart_data && order.cart_data.items) {
+        itemsHtml = order.cart_data.items.map(item => `
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
+                <div>
+                    <div style="font-weight: 600; color: #374151;">${item.product.name}</div>
+                    <div style="font-size: 0.9rem; color: #6b7280;">Quantity: ${item.quantity}</div>
+                    <div style="font-size: 0.9rem; color: #6b7280;">Unit Price: LKR ${parseInt(item.price).toLocaleString()}</div>
+                </div>
+                <div style="font-weight: 600; color: #374151;">
+                    LKR ${parseInt(item.total).toLocaleString()}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    return `
+        <div class="order-details-content">
+            <div class="detail-section">
+                <h3 style="color: #374151; margin-bottom: 16px;">
+                    <i class="fas fa-info-circle"></i> Order Information
+                </h3>
+                <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <div>
+                        <strong>Order ID:</strong> #${order.id}<br>
+                        <strong>Customer:</strong> ${order.user.name}<br>
+                        <strong>Email:</strong> ${order.user.email}
+                    </div>
+                    <div>
+                        <strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString()}<br>
+                        <strong>Payment Mode:</strong> ${order.payment_mode || 'N/A'}<br>
+                        <strong>Contact:</strong> ${order.contact_info || 'N/A'}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3 style="color: #374151; margin-bottom: 16px;">
+                    <i class="fas fa-shopping-cart"></i> Order Items
+                </h3>
+                <div class="items-list">
+                    ${itemsHtml}
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3 style="color: #374151; margin-bottom: 16px;">
+                    <i class="fas fa-calculator"></i> Order Summary
+                </h3>
+                <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Subtotal:</span>
+                        <span>LKR ${parseInt(order.cart_data.subtotal || 0).toLocaleString()}</span>
+                    </div>
+                    ${order.cart_data.discount > 0 ? `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #059669;">
+                            <span>Discount:</span>
+                            <span>-LKR ${parseInt(order.cart_data.discount).toLocaleString()}</span>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Delivery Fee:</span>
+                        <span>LKR ${parseInt(order.cart_data.delivery_fee || 0).toLocaleString()}</span>
+                    </div>
+                    <hr style="margin: 12px 0;">
+                    <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem;">
+                        <span>Total:</span>
+                        <span>LKR ${parseInt(order.cart_data.total || 0).toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+            
+            ${order.billing_data ? `
+                <div class="detail-section">
+                    <h3 style="color: #374151; margin-bottom: 16px;">
+                        <i class="fas fa-map-marker-alt"></i> Billing Address
+                    </h3>
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                        <div>${order.billing_data.first_name} ${order.billing_data.last_name}</div>
+                        ${order.billing_data.company_name ? `<div>${order.billing_data.company_name}</div>` : ''}
+                        <div>${order.billing_data.address_1}</div>
+                        ${order.billing_data.address_2 ? `<div>${order.billing_data.address_2}</div>` : ''}
+                        <div>${order.billing_data.town}, ${order.billing_data.postal_code}</div>
+                        <div style="margin-top: 8px;">
+                            <strong>Phone:</strong> ${order.billing_data.phone}<br>
+                            <strong>Email:</strong> ${order.billing_data.email}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${order.order_notes ? `
+                <div class="detail-section">
+                    <h3 style="color: #374151; margin-bottom: 16px;">
+                        <i class="fas fa-sticky-note"></i> Order Notes
+                    </h3>
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                        <p style="margin: 0; white-space: pre-wrap;">${order.order_notes}</p>
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${order.payment_data ? `
+                <div class="detail-section">
+                    <h3 style="color: #374151; margin-bottom: 16px;">
+                        <i class="fas fa-credit-card"></i> Payment Information
+                    </h3>
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                        <div><strong>Payment Mode:</strong> ${order.payment_mode || 'N/A'}</div>
+                        ${order.payment_data.order_id ? `<div><strong>Payment Order ID:</strong> ${order.payment_data.order_id}</div>` : ''}
+                        ${order.payment_data.status ? `<div><strong>Payment Status:</strong> <span class="order-status status-${order.payment_data.status}">${order.payment_data.status}</span></div>` : ''}
+                        ${order.payment_data.method ? `<div><strong>Payment Method:</strong> ${order.payment_data.method}</div>` : ''}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function editOrderStatus(orderId, currentStatus) {
+    // Show loading state while fetching order details
+    Swal.fire({
+        title: 'Loading Order Details...',
+        text: 'Please wait while we fetch the order information.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Fetch current order details
+    fetch(`/admin/orders/${orderId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            if (data.success) {
+                const order = data.order;
+                
+                // Populate form fields
+                document.getElementById('editOrderId').value = orderId;
+                document.getElementById('editOrderStatus').value = order.status || '0';
+                document.getElementById('editPaymentMode').value = order.payment_mode || '';
+                document.getElementById('editOrderNotes').value = order.order_notes || '';
+                document.getElementById('editContactInfo').value = order.contact_info || '';
+                
+                // Show modal
+                document.getElementById('editOrderModal').style.display = 'block';
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to load order details.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc2626'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to load order details.',
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+            });
+        });
+}
+
+function deleteOrder(orderId) {
+    Swal.fire({
+        title: 'Delete Order?',
+        text: `Are you sure you want to delete order #${orderId}? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Delete Order',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        focusCancel: true,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            content: 'swal-content',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+                title: 'Deleting Order...',
+                text: 'Please wait while we delete the order.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Delete the order
+            fetch(`/admin/orders/${orderId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'Order has been deleted successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#059669',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Failed to delete order.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc2626',
+                        confirmButtonText: 'Try Again'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'An unexpected error occurred while deleting the order.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc2626',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Handle edit order form submission
+document.getElementById('editOrderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const orderId = document.getElementById('editOrderId').value;
+    const status = document.getElementById('editOrderStatus').value;
+    const paymentMode = document.getElementById('editPaymentMode').value;
+    const orderNotes = document.getElementById('editOrderNotes').value;
+    const contactInfo = document.getElementById('editContactInfo').value;
+    
+    // Show loading state
+    Swal.fire({
+        title: 'Updating Order...',
+        text: 'Please wait while we update the order.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Update the order
+    fetch(`/admin/orders/${orderId}/update-status`, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            status: status,
+            payment_mode: paymentMode,
+            order_notes: orderNotes,
+            contact_info: contactInfo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('editOrderModal');
+            Swal.fire({
+                title: 'Updated!',
+                text: 'Order status has been updated successfully.',
+                icon: 'success',
+                confirmButtonColor: '#059669',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error!',
+                text: data.message || 'Failed to update order status.',
+                icon: 'error',
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Try Again'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: 'An unexpected error occurred while updating the order.',
+            icon: 'error',
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'OK'
+        });
+    });
+});
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+</script>
+
 @endsection
