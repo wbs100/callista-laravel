@@ -102,4 +102,69 @@ class UserController extends Controller
 
         return view('public-site.dashboard', compact('userRole', 'userData'));
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $userId = $user->id;
+
+        // Validate the request
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $userId,
+            'address_1' => 'required|string|max:255',
+            'address_2' => 'nullable|string|max:255',
+            'town' => 'required|string|max:255',
+            'postal_code' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            // Update user's name and email
+            $fullName = $request->first_name . ' ' . $request->last_name;
+            $user->name = $fullName;
+            
+            if ($user->email !== $request->email) {
+                $user->email = $request->email;
+                $user->email_verified_at = null; // Reset email verification if email changes
+            }
+            
+            $user->save();
+
+            // Update or create billing data
+            UserBillingData::updateOrCreate(
+                ['user_id' => $userId],
+                [
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'company_name' => $request->company_name,
+                    'address_1' => $request->address_1,
+                    'address_2' => $request->address_2,
+                    'town' => $request->town,
+                    'postal_code' => $request->postal_code,
+                    'phone' => $request->phone,
+                    'email' => $request->email,
+                    'notes' => $request->notes,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully!',
+                'data' => [
+                    'user' => $user->fresh(),
+                    'billingData' => UserBillingData::where('user_id', $userId)->first()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating profile: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

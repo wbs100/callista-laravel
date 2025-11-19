@@ -143,6 +143,7 @@ Route::middleware([
     
     // User Dashboard
     Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
+    Route::put('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
     
     // Admin Dashboard (with admin check)
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
