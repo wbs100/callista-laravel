@@ -49,6 +49,10 @@
     <!--jquery-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <!-- Include cart/wishlist logic -->
+    @include('public-site.partials.cw-logic')
+    @include('public-site.partials.cw-logic2')
+
     @stack('scripts')
 
 </body>

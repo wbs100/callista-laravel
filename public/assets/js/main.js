@@ -955,7 +955,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (cartCount) {
             cartCount.textContent = cartItems.length;
-            cartCount.style.display = cartItems.length > 0 ? 'flex' : 'none';
         }
     }
     

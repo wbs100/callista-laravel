@@ -341,11 +341,8 @@
 <!-- Product Modal -->
 <x-product-modal />
 
-<!-- Include cart/wishlist logic -->
-@include('public-site.partials.cw-logic')
-
 @push('scripts')
-<script src="{{ asset('assets/js/marketplace.js') }}"></script>
+{{-- <script src="{{ asset('assets/js/marketplace.js') }}"></script> --}}
 <script src="{{ asset('assets/js/sidebar-filters.js') }}"></script>
 <script src="{{ asset('assets/js/slideshow-fix.js') }}"></script>
 <script src="{{ asset('assets/js/marketplace-filter.js') }}"></script>

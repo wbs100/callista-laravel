@@ -272,10 +272,6 @@
 
 @push('scripts')
 
-<!-- Include cart/wishlist logic -->
-@include('public-site.partials.cw-logic')
-@include('public-site.partials.cw-logic2')
-
 <script>
     $(document).ready(function() {
     // Function to refresh cart page content
