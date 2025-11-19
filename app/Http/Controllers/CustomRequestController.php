@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\CustomRequest;
+use App\Models\Product;
+use App\Models\User;
+use App\Models\UserOrder;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 
@@ -145,7 +148,11 @@ class CustomRequestController extends Controller
         $customRequests = $query->orderBy('created_at', 'desc')->paginate(10);
         $customRequests->appends($request->query());
 
-        return view('admin-dashboard.custom-requests', compact('customRequests'));
+        $users = User::orderBy('created_at', 'desc')->paginate(10);
+        $products = Product::all();
+        $orders = UserOrder::all();
+
+        return view('admin-dashboard.custom-requests', compact('customRequests', 'users', 'products', 'orders'));
     }
 
     /**

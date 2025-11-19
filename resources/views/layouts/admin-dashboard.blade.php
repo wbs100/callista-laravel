@@ -681,13 +681,13 @@
                     <span class="nav-badge">{{ count($orders) }}</span>
                 </a>
             </div>
-            {{-- <div class="nav-item">
-                <a href="#" class="nav-link">
+            <div class="nav-item">
+                <a href="/admin/custom-requests" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.custom-requests']) ? 'active' : '' }}">
                     <i class="nav-icon fas fa-chart-bar"></i>
-                    <span class="nav-text">Analytics</span>
+                    <span class="nav-text">Custom Requirements</span>
                 </a>
             </div>
-            <div class="nav-item">
+            {{-- <div class="nav-item">
                 <a href="#" class="nav-link">
                     <i class="nav-icon fas fa-cog"></i>
                     <span class="nav-text">Settings</span>
