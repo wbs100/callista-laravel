@@ -14,8 +14,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
-            ProductSeeder::class,
-            ProductImageSeeder::class,
+            //ProductSeeder::class,
+            //ProductImageSeeder::class,
             // UserOrderSeeder::class,      // Add when order schema is ready
         ]);
     }
