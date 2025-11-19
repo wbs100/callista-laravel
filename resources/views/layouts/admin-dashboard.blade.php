@@ -681,7 +681,7 @@
                     <span class="nav-badge">{{ count($orders) }}</span>
                 </a>
             </div>
-            <div class="nav-item">
+            {{-- <div class="nav-item">
                 <a href="#" class="nav-link">
                     <i class="nav-icon fas fa-chart-bar"></i>
                     <span class="nav-text">Analytics</span>
@@ -692,7 +692,7 @@
                     <i class="nav-icon fas fa-cog"></i>
                     <span class="nav-text">Settings</span>
                 </a>
-            </div>
+            </div> --}}
             <div class="nav-item">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
