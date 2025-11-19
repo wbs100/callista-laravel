@@ -153,7 +153,7 @@ class MarketplaceFilter {
                 e.preventDefault();
                 e.stopPropagation();
                 const productId = e.target.closest('.btn-add-to-cart').dataset.productId;
-                this.addToCart(productId);
+                //this.addToCart(productId);
                 return;
             }
             
@@ -161,7 +161,7 @@ class MarketplaceFilter {
                 e.preventDefault();
                 e.stopPropagation();
                 const productId = e.target.closest('.btn-add-to-wishlist').dataset.productId;
-                this.addToWishlist(productId);
+                //this.addToWishlist(productId);
                 return;
             }
             
@@ -547,8 +547,8 @@ class MarketplaceFilter {
         }
         
         // Set up action buttons
-        document.getElementById('modalAddToCart').onclick = () => this.addToCart(product.id);
-        document.getElementById('modalAddToWishlist').onclick = () => this.addToWishlist(product.id);
+        // document.getElementById('modalAddToCart').onclick = () => this.addToCart(product.id);
+        // document.getElementById('modalAddToWishlist').onclick = () => this.addToWishlist(product.id);
     }
     
     changeMainImage(imageUrl, index) {
