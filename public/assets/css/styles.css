@@ -2318,3 +2318,7 @@ img {
     border-color: var(--border-color);
     transform: none;
 }
+
+.quantity__box{
+  display: flex;
+}

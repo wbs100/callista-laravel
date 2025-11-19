@@ -189,17 +189,37 @@ class CartController extends Controller
         $cartItems = Cart::getContent();
         $cartTotal = Cart::getTotal();
         $cartCount = Cart::getTotalQuantity();
+        
+        // Fetch full product details for each cart item
+        $cartItemsWithDetails = collect();
+        $totalDiscount = 0;
+        
+        foreach ($cartItems as $item) {
+            $product = Product::with('images')->find($item->id);
+            if ($product) {
+                // Calculate discount for this item
+                $itemDiscount = 0;
+                if ($product->old_price && $product->old_price > $product->new_price) {
+                    $itemDiscount = $item->quantity * ($product->old_price - $product->new_price);
+                    $totalDiscount += $itemDiscount;
+                }
+                
+                // Add product details to cart item
+                $itemWithDetails = (object) [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'quantity' => $item->quantity,
+                    'product' => $product,
+                    'item_discount' => $itemDiscount
+                ];
+                
+                $cartItemsWithDetails->push($itemWithDetails);
+            }
+        }
+        
         $subtotal = $cartItems->sum(function ($item) {
             return $item->quantity * $item->price;
-        });
-        
-        // Calculate discount (difference between old prices and current prices)
-        $totalDiscount = $cartItems->sum(function ($item) {
-            $oldPrice = $item->attributes->old_price ?? 0;
-            if ($oldPrice > 0) {
-                return $item->quantity * ($oldPrice - $item->price);
-            }
-            return 0;
         });
 
         $deliveryFee = $subtotal > 50000 ? 0 : 1500; // Free delivery over Rs. 50,000
@@ -212,7 +232,7 @@ class CartController extends Controller
             ->get();
 
         return view('public-site.cart', compact(
-            'cartItems', 
+            'cartItemsWithDetails', 
             'cartTotal', 
             'cartCount', 
             'subtotal', 
@@ -229,11 +249,27 @@ class CartController extends Controller
     public function getTable()
     {
         $cartItems = Cart::getContent();
-        // For now, return JSON response - can create partial view later
+        
+        // Fetch full product details for each cart item
+        $cartItemsWithDetails = collect();
+        foreach ($cartItems as $item) {
+            $product = Product::with('images')->find($item->id);
+            if ($product) {
+                $itemWithDetails = (object) [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'quantity' => $item->quantity,
+                    'product' => $product
+                ];
+                $cartItemsWithDetails->push($itemWithDetails);
+            }
+        }
+        
         return response()->json([
             'success' => true,
             'html' => '', // Will be implemented when partial views are created
-            'items' => $cartItems
+            'items' => $cartItemsWithDetails
         ]);
     }
 
@@ -244,11 +280,27 @@ class CartController extends Controller
     {
         $cartItems = Cart::getContent();
         $cartTotal = Cart::getTotal();
-        // For now, return JSON response - can create partial view later
+        
+        // Fetch full product details for each cart item
+        $cartItemsWithDetails = collect();
+        foreach ($cartItems as $item) {
+            $product = Product::with('images')->find($item->id);
+            if ($product) {
+                $itemWithDetails = (object) [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'quantity' => $item->quantity,
+                    'product' => $product
+                ];
+                $cartItemsWithDetails->push($itemWithDetails);
+            }
+        }
+        
         return response()->json([
             'success' => true,
             'html' => '', // Will be implemented when partial views are created
-            'items' => $cartItems,
+            'items' => $cartItemsWithDetails,
             'total' => $cartTotal
         ]);
     }

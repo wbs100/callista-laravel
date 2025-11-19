@@ -29,7 +29,7 @@
             <div class="cart-items-section">
                 <div class="section-title">
                     <h2>Cart Items</h2>
-                    @if($cartItems->count() > 0)
+                    @if($cartItemsWithDetails->count() > 0)
                     <button class="btn-text clear-cart">
                         <i class="fas fa-trash"></i> Clear Cart
                     </button>
@@ -37,17 +37,17 @@
                 </div>
 
                 <div id="cartTableBody">
-                    @if($cartItems->count() > 0)
-                    @foreach($cartItems as $item)
+                    @if($cartItemsWithDetails->count() > 0)
+                    @foreach($cartItemsWithDetails as $item)
                     <div class="cart-item" data-product-id="{{ $item->id }}">
                         <div class="item-image">
-                            @if($item->attributes->image && $item->attributes->image !== 'default.jpg')
-                            <img src="{{ asset('' . $item->attributes->image) }}"
+                            @if($item->product->images && $item->product->images->count() > 0)
+                            <img src="{{ asset('' . $item->product->images->first()->image) }}"
                                 alt="{{ $item->name }}">
                             @else
                             <img src="{{ asset('assets/images/placeholder.jpg') }}" alt="{{ $item->name }}">
                             @endif
-                            @if($item->attributes->old_price && $item->attributes->old_price > $item->price)
+                            @if($item->product->old_price && $item->product->old_price > $item->product->new_price)
                             <span class="item-badge sale">Sale</span>
                             @else
                             <span class="item-badge">New</span>
@@ -55,25 +55,25 @@
                         </div>
                         <div class="item-details">
                             <h3 class="item-name">{{ $item->name }}</h3>
-                            <p class="item-category"><i class="fas fa-tag"></i> {{ $item->attributes->type ??
-                                'Furniture' }}</p>
-                            <p class="item-description">{{ Str::limit($item->attributes->description ?? 'Premium quality
-                                furniture piece', 100) }}</p>
+                            <p class="item-category"><i class="fas fa-tag"></i> {{ $item->product->type ?? 'Furniture' }}</p>
+                            <p class="item-description">{{ Str::limit($item->product->description ?? 'Premium quality furniture piece', 100) }}</p>
                             <div class="item-specs">
-                                @if($item->attributes->color)
-                                <span><i class="fas fa-palette"></i> Color: {{ $item->attributes->color }}</span>
+                                @if($item->product->color)
+                                <span><i class="fas fa-palette"></i> Color: {{ $item->product->color }}</span>
                                 @endif
-                                @if($item->attributes->vendor)
-                                <span><i class="fas fa-store"></i> Vendor: {{ $item->attributes->vendor }}</span>
+                                @if($item->product->vendor)
+                                <span><i class="fas fa-store"></i> Vendor: {{ $item->product->vendor }}</span>
+                                @endif
+                                @if($item->product->barcode)
+                                <span><i class="fas fa-barcode"></i> SKU: {{ $item->product->barcode }}</span>
                                 @endif
                             </div>
                         </div>
                         <div class="item-actions">
                             <div class="item-price">
-                                <span class="current-price">LKR {{ number_format($item->price) }}</span>
-                                @if($item->attributes->old_price && $item->attributes->old_price > $item->price)
-                                <span class="original-price">LKR {{ number_format($item->attributes->old_price)
-                                    }}</span>
+                                <span class="current-price">LKR {{ number_format($item->product->new_price) }}</span>
+                                @if($item->product->old_price && $item->product->old_price > $item->product->new_price)
+                                <span class="original-price">LKR {{ number_format($item->product->old_price) }}</span>
                                 @endif
                             </div>
                             <div class="quantity-control">
@@ -130,7 +130,7 @@
             </div>
 
             <!-- Cart Summary -->
-            @if($cartItems->count() > 0)
+            @if($cartItemsWithDetails->count() > 0)
             <div class="cart-summary-section">
                 <div class="summary-card sticky-summary">
                     <h3>Order Summary</h3>
