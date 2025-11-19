@@ -526,12 +526,12 @@ class MarketplaceFilter {
         document.getElementById('modalDescription').textContent = product.description || 'No description available.';
         
         // Set tags
-        const tagsContainer = document.getElementById('modalTags');
-        if (product.tags && product.tags.length > 0) {
-            tagsContainer.innerHTML = product.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-        } else {
-            tagsContainer.innerHTML = '<span class="tag">No tags</span>';
-        }
+        // const tagsContainer = document.getElementById('modalTags');
+        // if (product.tags && product.tags.length > 0) {
+        //     tagsContainer.innerHTML = product.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+        // } else {
+        //     tagsContainer.innerHTML = '<span class="tag">No tags</span>';
+        // }
         
         // Set images
         if (product.images && product.images.length > 0) {
