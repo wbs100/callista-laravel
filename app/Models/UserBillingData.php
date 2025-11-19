@@ -11,7 +11,7 @@ class UserBillingData extends Model
 
     protected $table = 'billing_data';
 
-    protected $fillable = ['user_id', 'first_name', 'last_name', 'company_name', 'address_1', 'address_2', 'town',  'postal_code'];
+    protected $fillable = ['user_id', 'contact_info', 'first_name', 'last_name', 'company_name', 'address_1', 'address_2', 'town',  'postal_code'];
 
     public function user()
     {

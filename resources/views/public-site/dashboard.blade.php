@@ -25,10 +25,10 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                 </div>
-                <div class="stat-value">12</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+3 this month</span>
+                <div class="stat-value">{{ $userData['totalOrders'] }}</div>
+                <div class="stat-change {{ $userData['thisMonthOrders'] > 0 ? 'positive' : 'neutral' }}">
+                    <i class="fas fa-{{ $userData['thisMonthOrders'] > 0 ? 'arrow-up' : 'minus' }}"></i>
+                    <span>{{ $userData['thisMonthOrders'] > 0 ? '+' . $userData['thisMonthOrders'] . ' this month' : 'No orders this month' }}</span>
                 </div>
             </div>
 
@@ -39,10 +39,10 @@
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                 </div>
-                <div class="stat-value">LKR 540K</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+15% from last month</span>
+                <div class="stat-value">LKR {{ number_format($userData['totalSpent'] / 1000, 0) }}K</div>
+                <div class="stat-change {{ $userData['spentChange'] >= 0 ? 'positive' : 'negative' }}">
+                    <i class="fas fa-arrow-{{ $userData['spentChange'] >= 0 ? 'up' : 'down' }}"></i>
+                    <span>{{ $userData['spentChange'] >= 0 ? '+' : '' }}{{ $userData['spentChange'] }}% from last month</span>
                 </div>
             </div>
 
@@ -53,10 +53,10 @@
                         <i class="fas fa-heart"></i>
                     </div>
                 </div>
-                <div class="stat-value">8</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>2 new favorites</span>
+                <div class="stat-value">{{ $userData['wishlistCount'] }}</div>
+                <div class="stat-change {{ $userData['newWishlistItems'] > 0 ? 'positive' : 'neutral' }}">
+                    <i class="fas fa-{{ $userData['newWishlistItems'] > 0 ? 'arrow-up' : 'heart' }}"></i>
+                    <span>{{ $userData['newWishlistItems'] > 0 ? $userData['newWishlistItems'] . ' new favorites' : 'No new favorites' }}</span>
                 </div>
             </div>
 
@@ -67,10 +67,10 @@
                         <i class="fas fa-star"></i>
                     </div>
                 </div>
-                <div class="stat-value">2,450</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+150 points earned</span>
+                <div class="stat-value">{{ number_format($userData['loyaltyPoints']) }}</div>
+                <div class="stat-change {{ $userData['pointsEarned'] > 0 ? 'positive' : 'neutral' }}">
+                    <i class="fas fa-{{ $userData['pointsEarned'] > 0 ? 'arrow-up' : 'star' }}"></i>
+                    <span>{{ $userData['pointsEarned'] > 0 ? '+' . $userData['pointsEarned'] . ' points earned' : 'No points this month' }}</span>
                 </div>
             </div>
         </div>
@@ -130,41 +130,42 @@
         <div class="recent-orders">
             <div class="orders-header">Your Recent Purchases</div>
 
-            <div class="order-item">
-                <div class="order-info">
-                    <div class="order-id">#ORD-2025-001</div>
-                    <div class="order-date">October 25, 2025</div>
-                    <div>Modern Dining Table Set - LKR 125,000</div>
+            @if($userData['recentOrders']->count() > 0)
+                @foreach($userData['recentOrders'] as $order)
+                    @php
+                        $cartData = $order->cart_data;
+                        $paymentData = $order->payment_data;
+                        $total = isset($cartData['total']) ? $cartData['total'] : 0;
+                        $itemCount = isset($cartData['items']) ? count($cartData['items']) : 0;
+                        
+                        // Determine status class and text
+                        $statusClass = $order->status ? 'status-delivered' : 'status-processing';
+                        $statusText = $order->status ? 'Completed' : 'Processing';
+                        
+                        if (isset($paymentData['status']) && $paymentData['status'] === 'pending') {
+                            $statusClass = 'status-pending';
+                            $statusText = 'Pending Payment';
+                        }
+                    @endphp
+                    <div class="order-item">
+                        <div class="order-info">
+                            <div class="order-id">#{{ $order->id }}</div>
+                            <div class="order-date">{{ $order->created_at->format('F j, Y') }}</div>
+                            <div>{{ $itemCount }} item{{ $itemCount != 1 ? 's' : '' }} - LKR {{ number_format($total) }}</div>
+                        </div>
+                        <div class="order-status {{ $statusClass }}">{{ $statusText }}</div>
+                    </div>
+                @endforeach
+            @else
+                <div class="order-item">
+                    <div class="order-info">
+                        <div class="order-id">No orders yet</div>
+                        <div class="order-date">Start shopping to see your orders here</div>
+                        <div><a href="{{ route('marketplace') }}" class="text-primary">Browse our marketplace</a></div>
+                    </div>
+                    <div class="order-status status-pending">-</div>
                 </div>
-                <div class="order-status status-delivered">Delivered</div>
-            </div>
-
-            <div class="order-item">
-                <div class="order-info">
-                    <div class="order-id">#ORD-2025-002</div>
-                    <div class="order-date">October 20, 2025</div>
-                    <div>Luxury Sofa Set - LKR 185,000</div>
-                </div>
-                <div class="order-status status-shipped">Shipped</div>
-            </div>
-
-            <div class="order-item">
-                <div class="order-info">
-                    <div class="order-id">#ORD-2025-003</div>
-                    <div class="order-date">October 15, 2025</div>
-                    <div>Office Chair Collection - LKR 95,000</div>
-                </div>
-                <div class="order-status status-processing">Processing</div>
-            </div>
-
-            <div class="order-item">
-                <div class="order-info">
-                    <div class="order-id">#ORD-2025-004</div>
-                    <div class="order-date">October 10, 2025</div>
-                    <div>Custom Bedroom Set - LKR 275,000</div>
-                </div>
-                <div class="order-status status-delivered">Delivered</div>
-            </div>
+            @endif
         </div>
     </div>
 
@@ -188,23 +189,44 @@
             </div>
 
             <div class="info-group">
-                <div class="info-label">Phone Number</div>
-                <div class="info-value"></div>
+                <div class="info-label">Contact Info</div>
+                <div class="info-value">
+                    @if($userData['billingData']->contact_info)
+                        {{ $userData['billingData']->contact_info }}
+                    @else
+                        <span class="text-muted">Not provided</span>
+                    @endif
+                </div>
             </div>
 
             <div class="info-group">
                 <div class="info-label">Member Since</div>
-                <div class="info-value">{{ $userData['user']['created_at'] }}</div>
+                <div class="info-value">{{ $userData['user']['created_at']->format('F j, Y') }}</div>
             </div>
 
             <div class="info-group">
                 <div class="info-label">Delivery Address</div>
-                <div class="info-value"></div>
+                <div class="info-value">
+                    @if($userData['billingData'])
+                        {{ $userData['billingData']->address_1 }}
+                        @if($userData['billingData']->address_2), {{ $userData['billingData']->address_2 }}@endif
+                        <br>{{ $userData['billingData']->town }}, {{ $userData['billingData']->postal_code }}
+                    @else
+                        <span class="text-muted">No address saved</span>
+                    @endif
+                </div>
             </div>
 
             <div class="info-group">
                 <div class="info-label">Account Status</div>
-                <div class="info-value"></div>
+                <div class="info-value">
+                    <span class="status-badge status-active">Active</span>
+                    @if($userData['user']['email_verified_at'])
+                        <span class="status-badge status-verified">Verified</span>
+                    @else
+                        <span class="status-badge status-unverified">Unverified</span>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -215,4 +237,58 @@
     </div>
 </main>
 
+@endsection
+
+@section('styles')
+<style>
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 5px;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-verified {
+    background: #cce7ff;
+    color: #004085;
+}
+
+.status-unverified {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-primary {
+    color: #007bff !important;
+    text-decoration: none;
+}
+
+.text-primary:hover {
+    text-decoration: underline;
+}
+
+.stat-change.neutral {
+    color: #6c757d;
+}
+
+.stat-change.negative {
+    color: #dc3545;
+}
+</style>
 @endsection
