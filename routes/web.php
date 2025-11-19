@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WishlistController;
 
 /*
@@ -109,6 +110,14 @@ Route::post('/wishlist/remove', [WishlistController::class, 'remove'])->name('wi
 Route::get('/wishlist/count', [WishlistController::class, 'getCount'])->name('wishlist.count');
 Route::get('/wishlist/total', [WishlistController::class, 'getTotal'])->name('wishlist.total');
 
+Route::prefix('checkout')->group(function () {
+    //Route::get('/', [PaymentController::class, 'show'])->name('checkout.show');
+    Route::post('/store', [PaymentController::class, 'store'])->name('checkout.store');
+
+    Route::get('/payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
+    Route::get('/payment/cancel', [PaymentController::class, 'paymentCancel'])->name('payment.cancel');
+});
+
 // Admin Login Route
 Route::get('admin/login', [AdminController::class, 'login'])->name('admin.login');
 
@@ -125,6 +134,9 @@ Route::middleware([
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         } else {
+            // run method "migrateSessionToDatabase" in CartController / WishlistController
+            (new CartController)->migrateSessionToDatabase($user->id);
+            (new WishlistController)->migrateSessionToDatabase($user->id);
             return redirect()->route('user.dashboard');
         }
     })->name('dashboard');

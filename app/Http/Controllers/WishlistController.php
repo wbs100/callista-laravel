@@ -45,9 +45,11 @@ class WishlistController extends Controller
             $userId = Auth::id();
             $productId = $request->product_id;
 
+            $product = Product::with('images')->find($productId);
+
             // Check if product already in wishlist
             $existingWishlist = UserWishlist::where('user_id', $userId)
-                ->where('product_id', $productId)
+                ->where('item_id', $productId)
                 ->first();
 
             if ($existingWishlist) {
@@ -60,7 +62,20 @@ class WishlistController extends Controller
             // Add to wishlist
             UserWishlist::create([
                 'user_id' => $userId,
-                'product_id' => $productId,
+                'item_id' => $productId,
+                'name' => $product->name,
+                'price' => $product->new_price,
+                'quantity' => 1,
+                'attributes' => json_encode([
+                    'image' => $product->images->first()->image ?? 'default.jpg',
+                    'vendor' => $product->vendor ?? '',
+                    'stock_status' => $product->stock_status,
+                    'barcode' => $product->barcode ?? '',
+                    'color' => $product->color ?? '',
+                    'type' => $product->type ?? '',
+                    'old_price' => $product->old_price,
+                    'discount' => $product->old_price ? round((($product->old_price - $product->new_price) / $product->old_price) * 100) : 0
+                ])
             ]);
 
             $wishlistCount = UserWishlist::where('user_id', $userId)->count();
@@ -200,6 +215,47 @@ class WishlistController extends Controller
                 'total' => 0,
                 'items' => []
             ], 500);
+        }
+    }
+
+    /**
+     * Migrate session wishlist to database when user logs in
+     */
+    public function migrateSessionToDatabase($userId)
+    {
+        try {
+            $sessionCart = session()->get('wishlist', []);
+            
+            foreach ($sessionCart as $item) {
+                // Check if item already exists in user's database wishlist
+                $existingItem = UserWishlist::where('user_id', $userId)
+                    ->where('item_id', $item->id)
+                    ->first();
+
+                if ($existingItem) {
+                    // Update quantity if item exists
+                    $existingItem->quantity += $item->quantity;
+                    $existingItem->save();
+                } else {
+                    // Create new wishlist item
+                    UserWishlist::create([
+                        'user_id' => $userId,
+                        'item_id' => $item->id,
+                        'name' => $item->name,
+                        'price' => $item->price,
+                        'quantity' => $item->quantity,
+                        'attributes' => json_encode($item->attributes)
+                    ]);
+                }
+            }
+
+            // Clear session wishlist after migration
+            session()->forget('wishlist');
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Wishlist migration error: ' . $e->getMessage());
+            return false;
         }
     }
 }

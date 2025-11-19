@@ -19,4 +19,24 @@ class UserCart extends Model
         'quantity',
         'attributes'
     ];
+
+    protected $casts = [
+        'attributes' => 'array'
+    ];
+
+    /**
+     * Get the user that owns the cart item
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the product details
+     */
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'item_id');
+    }
 }
