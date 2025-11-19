@@ -455,7 +455,7 @@ function openProductModal(productId) {
         })
         .catch(error => {
             console.error('Error fetching product:', error);
-            closeProductModal();
+            //closeProductModal();
         });
 }
 
@@ -524,6 +524,8 @@ function populateModal(product) {
                 <img src="${image.url}" alt="${image.alt}">
             </div>
         `).join('');
+    } else {
+        alert("oops")
     }
     
     // Set up action buttons
