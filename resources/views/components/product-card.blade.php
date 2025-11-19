@@ -7,7 +7,10 @@
     'classes' => ''
 ])
 
-<div class="product-card {{ $classes }}" data-product-id="{{ $product->id }}" data-aos="fade-up">
+<div class="product-card {{ $classes }}" 
+     data-product-id="{{ $product->id }}" 
+     data-filter-categories="{{ $attributes->get('data-filter-categories', '') }}"
+     data-aos="fade-up">
     @if($showBadge && ($badgeText || $product->old_price))
         <div class="product-badge">
             {{ $badgeText ?? ($product->old_price ? 'Sale' : 'New') }}

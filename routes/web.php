@@ -42,7 +42,8 @@ Route::get('/', function () {
     $featuredProducts = App\Models\Product::with('images')
         ->where('stock_status', '!=', 'out_of_stock')
         ->orderBy('rating', 'desc')
-        ->take(8)
+        ->orderBy('created_at', 'desc')
+        ->take(12)  // Increased to show more products for better filtering
         ->get();
         
     $categories = App\Models\Product::select('type')
