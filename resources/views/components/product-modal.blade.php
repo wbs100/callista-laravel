@@ -69,12 +69,12 @@
                         <button type="button" onclick="increaseQuantity()">+</button>
                     </div>
                     
-                    <button class="btn btn-primary add-to-cart-btn" id="modalAddToCart">
+                    <button class="btn btn-primary add-to-cart-btn" id="modalAddToCart" style="width: fit-content">
                         <i class="fas fa-shopping-cart"></i>
                         Add to Cart
                     </button>
                     
-                    <button class="btn btn-outline add-to-wishlist-btn" id="modalAddToWishlist">
+                    <button class="btn btn-primary add-to-wishlist-btn" id="modalAddToWishlist" style="width: fit-content">
                         <i class="fas fa-heart"></i>
                         Add to Wishlist
                     </button>

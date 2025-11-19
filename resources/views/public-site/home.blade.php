@@ -504,15 +504,17 @@ function populateModal(product) {
     document.getElementById('modalDescription').textContent = product.description || 'No description available.';
     
     // Set tags
-    const tagsContainer = document.getElementById('modalTags');
-    if (product.tags && product.tags.length > 0) {
-        tagsContainer.innerHTML = product.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-    } else {
-        tagsContainer.innerHTML = '<span class="tag">No tags</span>';
-    }
+    // const tagsContainer = document.getElementById('modalTags');
+    // if (product.tags && product.tags.length > 0) {
+    //     tagsContainer.innerHTML = product.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+    // } else {
+    //     tagsContainer.innerHTML = '<span class="tag">No tags</span>';
+    // }
     
     // Set images
     if (product.images && product.images.length > 0) {
+        console.log(product.images);
+        console.log(product.images.length);
         // Main image
         document.getElementById('modalMainImage').src = product.images[0].url;
         document.getElementById('modalMainImage').alt = product.images[0].alt;
@@ -524,6 +526,8 @@ function populateModal(product) {
                 <img src="${image.url}" alt="${image.alt}">
             </div>
         `).join('');
+
+        console.log();
     } else {
         alert("oops")
     }
