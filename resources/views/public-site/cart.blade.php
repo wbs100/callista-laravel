@@ -24,7 +24,7 @@
 <!-- Cart Content -->
 <section class="cart-content">
     <div class="container">
-        <div class="cart-layout">
+        <div class="cart-layout" style="@if($cartItemsWithDetails->count() > 0) grid-template-columns: 2fr 1fr; @else grid-template-columns: 1fr; @endif">
             <!-- Cart Items -->
             <div class="cart-items-section">
                 <div class="section-title">

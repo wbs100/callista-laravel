@@ -881,12 +881,12 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('userLoggedIn', 'true');
         localStorage.setItem('userData', JSON.stringify(userData));
         
-        updateUserInterface();
+        //updateUserInterface();
         showNotification(`Welcome back, ${name}!`, 'success');
     }
     
     // Initialize user interface
-    updateUserInterface();
+    // updateUserInterface();
     
     // Demo: Double-click on user button to simulate login (for testing)
     // if (userAccountBtn) {

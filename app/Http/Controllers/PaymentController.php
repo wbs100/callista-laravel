@@ -159,10 +159,11 @@ class PaymentController extends Controller
                 return redirect()->route('cart')->with('error', "Product '{$product->name}' is out of stock.");
             }
             
-            $itemTotal = $product->new_price * $item->quantity;
+            // Use the current price from cart (which is already the discounted price)
+            $itemTotal = $item->price * $item->quantity;
             $subtotal += $itemTotal;
             
-            // Calculate discount for this item
+            // Calculate discount for this item (difference between old and new price)
             if ($product->old_price && $product->old_price > $product->new_price) {
                 $itemDiscount = $item->quantity * ($product->old_price - $product->new_price);
                 $totalDiscount += $itemDiscount;
@@ -171,14 +172,14 @@ class PaymentController extends Controller
             $orderItems[] = [
                 'product' => $product,
                 'quantity' => $item->quantity,
-                'price' => $product->new_price,
+                'price' => $item->price, // Use cart price (already discounted)
                 'total' => $itemTotal
             ];
         }
         
-        // Calculate delivery fee and final total
+        // Calculate delivery fee and final total (match the show method logic)
         $deliveryFee = $subtotal > 50000 ? 0 : 1500; // Free delivery over Rs. 50,000
-        $total = $subtotal - $totalDiscount + $deliveryFee;
+        $total = $subtotal + $deliveryFee; // Subtotal is already using discounted prices, so no need to subtract discount again
 
         Log::info('Checkout Total: ' . $total); // Debug log
 
@@ -232,10 +233,10 @@ class PaymentController extends Controller
             // Prepare cart data for storage
             $cartData = [
                 'items' => $orderItems,
-                'subtotal' => $subtotal,
-                'discount' => $totalDiscount,
+                'subtotal' => $subtotal, // This is the sum of discounted prices
+                'discount' => $totalDiscount, // This is the total discount amount
                 'delivery_fee' => $deliveryFee,
-                'total' => $total,
+                'total' => $total, // This is subtotal + delivery_fee (discount already applied in subtotal)
             ];
 
             // Prepare payment data
