@@ -105,7 +105,7 @@ class AdminController extends Controller
         return view('admin-dashboard.products', compact('products', 'users', 'orders'));
     }
 
-    public function orders()
+    public function orders(Request $request)
     {
         // Ensure only admins can access
         if (auth()->user()->role !== 'admin') {
@@ -114,7 +114,71 @@ class AdminController extends Controller
 
         $users = User::all();
         $products = Product::all();
-        $orders = UserOrder::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Build query with filters
+        $query = UserOrder::with('user');
+        
+        // Order ID filter
+        if ($request->filled('order_id')) {
+            $query->where('id', 'like', '%' . $request->order_id . '%');
+        }
+        
+        // Customer filter (search in user name or email)
+        if ($request->filled('customer')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->customer . '%')
+                  ->orWhere('email', 'like', '%' . $request->customer . '%');
+            });
+        }
+        
+        // Status filter
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $query->where(function($q) use ($status) {
+                // Handle boolean values (0/1)
+                if ($status === '0') {
+                    $q->where('status', 0)->orWhere('status', false)->orWhere('status', 'pending');
+                } elseif ($status === '1') {
+                    $q->where('status', 1)->orWhere('status', true)->orWhere('status', 'completed');
+                } else {
+                    // Handle string statuses
+                    $q->where('status', $status);
+                }
+            });
+        }
+        
+        // Date range filter
+        if ($request->filled('date_range')) {
+            $dateRange = $request->date_range;
+            $now = now();
+            
+            switch ($dateRange) {
+                case 'today':
+                    $query->whereDate('created_at', $now->toDateString());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereMonth('created_at', $now->month)
+                          ->whereYear('created_at', $now->year);
+                    break;
+                case 'custom':
+                    if ($request->filled('date_from')) {
+                        $query->whereDate('created_at', '>=', $request->date_from);
+                    }
+                    if ($request->filled('date_to')) {
+                        $query->whereDate('created_at', '<=', $request->date_to);
+                    }
+                    break;
+            }
+        }
+        
+        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Preserve query parameters in pagination links
+        $orders->appends($request->query());
+        
         return view('admin-dashboard.orders', compact('orders', 'users', 'products'));
     }
 

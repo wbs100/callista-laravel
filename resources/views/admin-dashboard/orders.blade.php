@@ -56,13 +56,15 @@
                     </div>
                 </div>
                 @php
-                    $pendingCount = $orders->filter(function($order) {
-                        return $order->status === false || $order->status === 'pending' || 
+                    $allOrders = $orders->getCollection(); // Get the filtered collection
+                    
+                    $pendingCount = $allOrders->filter(function($order) {
+                        return $order->status === false || $order->status === 0 || $order->status === 'pending' || 
                                (isset($order->payment_data['status']) && $order->payment_data['status'] === 'pending');
                     })->count();
                     
-                    $completedCount = $orders->filter(function($order) {
-                        return $order->status === true || $order->status === 'completed' || $order->status === 'delivered';
+                    $completedCount = $allOrders->filter(function($order) {
+                        return $order->status === true || $order->status === 1 || $order->status === 'completed' || $order->status === 'delivered';
                     })->count();
                 @endphp
                 <div class="stat-value">{{ $pendingCount }}</div>
@@ -94,10 +96,10 @@
             <div class="summary-icon summary-pending">
                 <i class="fas fa-clock"></i>
             </div>
-            <div class="summary-value">{{ $orders->where('status', 'pending')->count() }}</div>
+            <div class="summary-value">{{ $orders->where('status', '0')->count() }}</div>
             <div class="summary-label">Pending Orders</div>
         </div>
-        <div class="summary-card">
+        {{-- <div class="summary-card">
             <div class="summary-icon summary-processing">
                 <i class="fas fa-cogs"></i>
             </div>
@@ -110,18 +112,18 @@
             </div>
             <div class="summary-value">{{ $orders->where('status', 'shipped')->count() }}</div>
             <div class="summary-label">Shipped</div>
-        </div>
+        </div> --}}
         <div class="summary-card">
             <div class="summary-icon summary-delivered">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="summary-value">{{ $orders->where('status', 'delivered')->count() }}</div>
-            <div class="summary-label">Delivered</div>
+            <div class="summary-value">{{ $orders->where('status', '1')->count() }}</div>
+            <div class="summary-label">Completed</div>
         </div>
     </div>
 
-    <!-- Priority Orders Alert -->
-    <div class="priority-orders">
+    <!-- Priority Orders Alert (hidden)-->
+    {{-- <div class="priority-orders">
         <div class="priority-title">
             <i class="fas fa-exclamation-triangle"></i>
             Priority Orders
@@ -146,44 +148,54 @@
                 <span class="priority-reason">Express</span>
             </li>
         </ul>
-    </div>
+    </div> --}}
 
     <!-- Order Filters -->
     <div class="order-filters">
         <div class="filter-row">
             <div class="form-group">
                 <label class="form-label">Order ID</label>
-                <input type="text" class="form-input" placeholder="Search by order ID...">
+                <input type="text" id="filterOrderId" class="form-input" placeholder="Search by order ID..." value="{{ request('order_id') }}">
             </div>
             <div class="form-group">
                 <label class="form-label">Customer</label>
-                <input type="text" class="form-input" placeholder="Search by customer...">
+                <input type="text" id="filterCustomer" class="form-input" placeholder="Search by customer..." value="{{ request('customer') }}">
             </div>
             <div class="form-group">
                 <label class="form-label">Status</label>
-                <select class="form-select">
+                <select id="filterStatus" class="form-select">
                     <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Pending</option>
+                    <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Completed</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label">Date Range</label>
-                <select class="form-select">
+                <select id="filterDateRange" class="form-select">
                     <option value="">All Dates</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="custom">Custom Range</option>
+                    <option value="today" {{ request('date_range') == 'today' ? 'selected' : '' }}>Today</option>
+                    <option value="week" {{ request('date_range') == 'week' ? 'selected' : '' }}>This Week</option>
+                    <option value="month" {{ request('date_range') == 'month' ? 'selected' : '' }}>This Month</option>
+                    <option value="custom" {{ request('date_range') == 'custom' ? 'selected' : '' }}>Custom Range</option>
                 </select>
             </div>
-            <button class="btn-filter">
-                <i class="fas fa-filter"></i>
-                Filter
-            </button>
+            <div class="form-group custom-date-inputs" style="display: {{ request('date_range') == 'custom' ? 'block' : 'none' }};">
+                <label class="form-label">Custom Date Range</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="date" id="filterDateFrom" class="form-input" placeholder="From" value="{{ request('date_from') }}" style="flex: 1;">
+                    <input type="date" id="filterDateTo" class="form-input" placeholder="To" value="{{ request('date_to') }}" style="flex: 1;">
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-filter" onclick="applyFilters()">
+                    <i class="fas fa-filter"></i>
+                    Filter
+                </button>
+                <button class="btn-clear-filter" onclick="clearFilters()">
+                    <i class="fas fa-times"></i>
+                    Clear
+                </button>
+            </div>
         </div>
     </div>
 
@@ -202,7 +214,20 @@
         </div>
 
         <div class="orders-table">
-            <div class="table-header">Recent Orders</div>
+            <div class="table-header">
+                Recent Orders
+                @if(request()->hasAny(['order_id', 'customer', 'status', 'date_range']))
+                    <span class="filter-indicator">
+                        <i class="fas fa-filter"></i>
+                        Filtered Results ({{ $orders->total() }} found)
+                        <button class="clear-filters-btn" onclick="clearFilters()" title="Clear all filters">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </span>
+                @else
+                    <span class="total-count">({{ $orders->total() }} total)</span>
+                @endif
+            </div>
             <div class="orders-table-content">
                 <table>
                     <thead>
@@ -238,7 +263,7 @@
                                         @if(isset($order->cart_data['items']) && is_array($order->cart_data['items']))
                                             @foreach($order->cart_data['items'] as $item)
                                                 <div class="product-item">
-                                                    <span class="product-name">{{ $item['product']['name'] ?? 'Unknown Product' }}</span>
+                                                    <span class="product-name m-0">{{ $item['product']['name'] ?? 'Unknown Product' }}</span>
                                                     <span class="product-quantity">×{{ $item['quantity'] ?? 1 }}</span>
                                                 </div>
                                             @endforeach
@@ -312,8 +337,17 @@
                             <tr>
                                 <td colspan="7" class="text-center" style="padding: 40px;">
                                     <div style="opacity: 0.6;">
-                                        <i class="fas fa-shopping-cart" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                                        <p>No orders found</p>
+                                        @if(request()->hasAny(['order_id', 'customer', 'status', 'date_range']))
+                                            <i class="fas fa-filter" style="font-size: 2rem; margin-bottom: 10px; color: #667eea;"></i>
+                                            <p>No orders match your filters</p>
+                                            <button class="btn-clear-filter" onclick="clearFilters()" style="margin-top: 16px;">
+                                                <i class="fas fa-times"></i>
+                                                Clear Filters
+                                            </button>
+                                        @else
+                                            <i class="fas fa-shopping-cart" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                            <p>No orders found</p>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -577,7 +611,7 @@
 
 /* Form Styles */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .form-label {
@@ -675,6 +709,141 @@ textarea.form-input {
 /* Loading animation for SweetAlert */
 .swal2-loader {
     border-color: #667eea transparent #667eea transparent !important;
+}
+
+/* Filter Styles */
+.order-filters {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: end;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 0px;
+}
+
+.btn-filter,
+.btn-clear-filter {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-clear-filter {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-clear-filter:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.custom-date-inputs {
+    grid-column: span 2;
+}
+
+/* Filter indicator styles */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
+.filter-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.clear-filters-btn {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+    background: #fecaca;
+    transform: scale(1.05);
+}
+
+.total-count {
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .custom-date-inputs {
+        grid-column: span 1;
+    }
+    
+    .filter-actions {
+        justify-content: stretch;
+    }
+    
+    .btn-filter,
+    .btn-clear-filter {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .filter-indicator,
+    .total-count {
+        font-size: 0.8rem;
+    }
 }
 </style>
 
@@ -1049,6 +1218,85 @@ window.onclick = function(event) {
         }
     });
 }
+
+// Filter functionality
+function applyFilters() {
+    const orderId = document.getElementById('filterOrderId').value;
+    const customer = document.getElementById('filterCustomer').value;
+    const status = document.getElementById('filterStatus').value;
+    const dateRange = document.getElementById('filterDateRange').value;
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    
+    if (orderId.trim()) params.append('order_id', orderId.trim());
+    if (customer.trim()) params.append('customer', customer.trim());
+    if (status) params.append('status', status);
+    if (dateRange) params.append('date_range', dateRange);
+    if (dateRange === 'custom') {
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+    }
+
+    // Redirect with filters
+    const currentUrl = window.location.pathname;
+    const newUrl = params.toString() ? `${currentUrl}?${params.toString()}` : currentUrl;
+    window.location.href = newUrl;
+}
+
+function clearFilters() {
+    // Clear all filter inputs
+    document.getElementById('filterOrderId').value = '';
+    document.getElementById('filterCustomer').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterDateRange').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    // Hide custom date inputs
+    document.querySelector('.custom-date-inputs').style.display = 'none';
+    
+    // Redirect to base URL without filters
+    window.location.href = window.location.pathname;
+}
+
+// Show/hide custom date inputs based on date range selection
+document.getElementById('filterDateRange').addEventListener('change', function() {
+    const customDateInputs = document.querySelector('.custom-date-inputs');
+    if (this.value === 'custom') {
+        customDateInputs.style.display = 'block';
+    } else {
+        customDateInputs.style.display = 'none';
+        // Clear custom date values when not using custom range
+        document.getElementById('filterDateFrom').value = '';
+        document.getElementById('filterDateTo').value = '';
+    }
+});
+
+// Allow filtering by pressing Enter in input fields
+document.getElementById('filterOrderId').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') applyFilters();
+});
+
+document.getElementById('filterCustomer').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') applyFilters();
+});
+
+// Auto-apply filters when status changes
+document.getElementById('filterStatus').addEventListener('change', function() {
+    if (this.value !== '') {
+        applyFilters();
+    }
+});
+
+// Auto-apply filters when date range changes (except custom)
+document.getElementById('filterDateRange').addEventListener('change', function() {
+    if (this.value !== '' && this.value !== 'custom') {
+        applyFilters();
+    }
+});
 </script>
 
 @endsection

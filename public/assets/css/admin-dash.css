@@ -1241,3 +1241,7 @@
 .text-nowrap{
     text-wrap: nowrap;
 }
+
+.m-0{
+    margin: 0;
+}
