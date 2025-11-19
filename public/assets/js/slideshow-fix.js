@@ -1,12 +1,12 @@
 // DIRECT SLIDESHOW FIX - FORCE OVERRIDE
 // This will definitely work
 
-// console.log('🔧 Direct slideshow fix starting...');
+console.log('🔧 Direct slideshow fix starting...');
 
 let slideshowFixed = false;
 
 function forceFixSlideshow() {
-    // console.log('🎯 Attempting slideshow fix...');
+    console.log('🎯 Attempting slideshow fix...');
     
     const slidesTrack = document.getElementById('slidesTrack');
     const slides = document.querySelectorAll('.slide');
