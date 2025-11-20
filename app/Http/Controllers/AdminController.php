@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserOrder;
@@ -34,8 +35,9 @@ class AdminController extends Controller
         $users = User::all();
         $products = Product::all();
         $orders = UserOrder::all();
+        $customRequests = CustomRequest::all();
 
-        return view('admin-dashboard.home', compact('userRole', 'adminData', 'users', 'products', 'orders'));
+        return view('admin-dashboard.home', compact('userRole', 'adminData', 'users', 'products', 'orders', 'customRequests'));
     }
 
     public function users()
@@ -48,7 +50,9 @@ class AdminController extends Controller
         $users = User::orderBy('created_at', 'desc')->paginate(10);
         $products = Product::all();
         $orders = UserOrder::all();
-        return view('admin-dashboard.users', compact('users', 'products', 'orders'));
+        $customRequests = CustomRequest::all();
+
+        return view('admin-dashboard.users', compact('users', 'products', 'orders', 'customRequests'));
     }
 
     public function products(Request $request)
@@ -60,6 +64,7 @@ class AdminController extends Controller
 
         $users = User::all();
         $orders = UserOrder::all();
+        $customRequests = CustomRequest::all();
         
         // Build query with filters
         $query = Product::query();
@@ -102,7 +107,7 @@ class AdminController extends Controller
         
         $products = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
         
-        return view('admin-dashboard.products', compact('products', 'users', 'orders'));
+        return view('admin-dashboard.products', compact('products', 'users', 'orders', 'customRequests'));
     }
 
     public function orders(Request $request)
@@ -114,6 +119,7 @@ class AdminController extends Controller
 
         $users = User::all();
         $products = Product::all();
+        $customRequests = CustomRequest::all();
         
         // Build query with filters
         $query = UserOrder::with('user');
@@ -179,7 +185,7 @@ class AdminController extends Controller
         // Preserve query parameters in pagination links
         $orders->appends($request->query());
         
-        return view('admin-dashboard.orders', compact('orders', 'users', 'products'));
+        return view('admin-dashboard.orders', compact('orders', 'users', 'products', 'customRequests'));
     }
 
     public function login()

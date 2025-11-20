@@ -3,12 +3,12 @@
 @section('content')
 
 <div class="dashboard-content">
-    <!-- Custom Requirements - Highlighted Section -->
+    <!-- Custom Requests - Highlighted Section -->
     <div class="highlighted-section">
-        <div class="highlight-badge">Custom Requirements</div>
+        <div class="highlight-badge">Custom Requests</div>
         <h2 class="section-title-highlighted">
             <i class="fas fa-chart-line"></i>
-            Custom Requirements
+            Custom Requests
         </h2>
 
         <div class="stats-grid">

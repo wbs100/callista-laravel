@@ -684,7 +684,8 @@
             <div class="nav-item">
                 <a href="/admin/custom-requests" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.custom-requests']) ? 'active' : '' }}">
                     <i class="nav-icon fas fa-chart-bar"></i>
-                    <span class="nav-text">Custom Requirements</span>
+                    <span class="nav-text">Custom Requests</span>
+                    <span class="nav-badge">{{ count($customRequests) }}</span>
                 </a>
             </div>
             {{-- <div class="nav-item">
