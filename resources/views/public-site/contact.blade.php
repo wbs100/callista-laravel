@@ -597,6 +597,46 @@
 
 @push('scripts')
 <script src="{{ asset('assets/js/contact.js') }}"></script>
+<script>
+$(document).ready(function() {
+    $('#contact-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var btn = form.find('button[type="submit"]');
+        btn.prop('disabled', true);
+        $.ajax({
+            url: '{{ route('project-inquiry.store') }}',
+            method: 'POST',
+            data: form.serialize(),
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inquiry Submitted!',
+                    text: response.message || 'Your project inquiry has been received. We will contact you soon.'
+                });
+                form[0].reset();
+            },
+            error: function(xhr) {
+                let msg = 'An error occurred. Please check your input.';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    msg = Object.values(xhr.responseJSON.errors).join('\n');
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: msg
+                });
+            },
+            complete: function() {
+                btn.prop('disabled', false);
+            }
+        });
+    });
+});
+</script>
 @endpush
 
 @endsection

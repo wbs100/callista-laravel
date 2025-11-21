@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CustomRequestController;
 use App\Http\Controllers\ConsultationRequestController;
+use App\Http\Controllers\ProjectInquiryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -174,3 +175,4 @@ Route::middleware([
 
 // Consultation Request route
 Route::post('/consultation-request', [ConsultationRequestController::class, 'store'])->name('consultation-request.store');
+Route::post('/project-inquiry', [ProjectInquiryController::class, 'store'])->name('project-inquiry.store');
