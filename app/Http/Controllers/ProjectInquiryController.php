@@ -3,6 +3,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ProjectInquiry;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\CustomRequest;
+use App\Models\ConsultationRequest;
+use App\Models\Order;
 
 class ProjectInquiryController extends Controller
 {
@@ -24,5 +29,16 @@ class ProjectInquiryController extends Controller
         $validated['newsletter'] = $request->has('newsletter');
         ProjectInquiry::create($validated);
         return response()->json(['message' => 'Your inquiry has been submitted. We will contact you soon.']);
+    }
+
+    public function index()
+    {
+        $users = User::all();
+        $products = Product::all();
+        $customRequests = CustomRequest::all();
+        $consultationRequests = ConsultationRequest::all();
+        $orders = Order::all();
+        $projectInquiries = ProjectInquiry::orderBy('created_at', 'desc')->paginate(10);
+        return view('admin-dashboard.project-inquiries', compact('projectInquiries', 'users', 'products', 'customRequests', 'consultationRequests', 'orders'));
     }
 }

@@ -171,6 +171,11 @@ Route::middleware([
     Route::get('/admin/custom-requests/{id}/edit', [CustomRequestController::class, 'edit'])->name('admin.custom-requests.edit');
     Route::put('/admin/custom-requests/{id}', [CustomRequestController::class, 'update'])->name('admin.custom-requests.update');
     Route::delete('/admin/custom-requests/{id}', [CustomRequestController::class, 'destroy'])->name('admin.custom-requests.destroy');
+
+    // consultation and project inquiry admin routes
+    Route::get('/admin/consultation-requests', [ConsultationRequestController::class, 'index'])->name('admin.consultation-requests');
+    Route::get('/admin/project-inquiries', [ProjectInquiryController::class, 'index'])->name('admin.project-inquiries');
+    // Add show, edit, update, delete routes as needed
 });
 
 // Consultation Request route

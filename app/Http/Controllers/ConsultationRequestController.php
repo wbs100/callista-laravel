@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ConsultationRequest;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\CustomRequest;
+use App\Models\Order;
+use App\Models\ProjectInquiry;
 
 class ConsultationRequestController extends Controller
 {
@@ -56,5 +61,16 @@ class ConsultationRequestController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    public function index()
+    {
+        $users = User::all();
+        $products = Product::all();
+        $customRequests = CustomRequest::all();
+        $projectInquiries = ProjectInquiry::all();
+        $orders = Order::all();
+        $consultationRequests = ConsultationRequest::orderBy('created_at', 'desc')->paginate(10);
+        return view('admin-dashboard.consultation-requests', compact('consultationRequests', 'projectInquiries',  'users', 'products', 'customRequests', 'orders'));
     }
 }

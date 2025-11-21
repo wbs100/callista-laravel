@@ -688,6 +688,20 @@
                     <span class="nav-badge">{{ count($customRequests) }}</span>
                 </a>
             </div>
+            <div class="nav-item">
+                <a href="/admin/consultation-requests" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.consultation-requests']) ? 'active' : '' }}">
+                    <i class="nav-icon fas fa-comments"></i>
+                    <span class="nav-text">Consultation Requests</span>
+                    <span class="nav-badge">{{ count($consultationRequests) }}</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/project-inquiries" class="nav-link {{ in_array(Route::currentRouteName(), ['admin.project-inquiries']) ? 'active' : '' }}">
+                    <i class="nav-icon fas fa-briefcase"></i>
+                    <span class="nav-text">Project Inquiries</span>
+                    <span class="nav-badge">{{ count($projectInquiries) }}</span>
+                </a>
+            </div>
             {{-- <div class="nav-item">
                 <a href="#" class="nav-link">
                     <i class="nav-icon fas fa-cog"></i>

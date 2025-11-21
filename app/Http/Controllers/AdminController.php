@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserOrder;
 use App\Models\Product;
+use App\Models\ConsultationRequest;
+use App\Models\ProjectInquiry;
 
 class AdminController extends Controller
 {
@@ -36,8 +38,10 @@ class AdminController extends Controller
         $products = Product::all();
         $orders = UserOrder::all();
         $customRequests = CustomRequest::all();
+        $consultationRequests = ConsultationRequest::all();
+        $projectInquiries = ProjectInquiry::all();
 
-        return view('admin-dashboard.home', compact('userRole', 'adminData', 'users', 'products', 'orders', 'customRequests'));
+        return view('admin-dashboard.home', compact('userRole', 'adminData', 'users', 'products', 'orders', 'customRequests', 'consultationRequests', 'projectInquiries'));
     }
 
     public function users()
@@ -51,8 +55,10 @@ class AdminController extends Controller
         $products = Product::all();
         $orders = UserOrder::all();
         $customRequests = CustomRequest::all();
+        $consultationRequests = ConsultationRequest::all();
+        $projectInquiries = ProjectInquiry::all();
 
-        return view('admin-dashboard.users', compact('users', 'products', 'orders', 'customRequests'));
+        return view('admin-dashboard.users', compact('users', 'products', 'orders', 'customRequests', 'consultationRequests', 'projectInquiries'));
     }
 
     public function products(Request $request)
@@ -65,6 +71,8 @@ class AdminController extends Controller
         $users = User::all();
         $orders = UserOrder::all();
         $customRequests = CustomRequest::all();
+        $consultationRequests = ConsultationRequest::all();
+        $projectInquiries = ProjectInquiry::all();
         
         // Build query with filters
         $query = Product::query();
@@ -107,7 +115,7 @@ class AdminController extends Controller
         
         $products = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
         
-        return view('admin-dashboard.products', compact('products', 'users', 'orders', 'customRequests'));
+        return view('admin-dashboard.products', compact('products', 'users', 'orders', 'customRequests', 'consultationRequests', 'projectInquiries'));
     }
 
     public function orders(Request $request)
@@ -120,6 +128,8 @@ class AdminController extends Controller
         $users = User::all();
         $products = Product::all();
         $customRequests = CustomRequest::all();
+        $consultationRequests = ConsultationRequest::all();
+        $projectInquiries = ProjectInquiry::all();
         
         // Build query with filters
         $query = UserOrder::with('user');
@@ -185,7 +195,7 @@ class AdminController extends Controller
         // Preserve query parameters in pagination links
         $orders->appends($request->query());
         
-        return view('admin-dashboard.orders', compact('orders', 'users', 'products', 'customRequests'));
+        return view('admin-dashboard.orders', compact('orders', 'users', 'products', 'customRequests', 'consultationRequests', 'projectInquiries'));
     }
 
     public function login()
